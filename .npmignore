@@ -1,0 +1,11 @@
+.idea
+language-insights-client-sdk.iml
+README.md
+src
+node_modules
+.scannerwork
+.npmignore
+.npmrc
+config.json
+examples
+webpack

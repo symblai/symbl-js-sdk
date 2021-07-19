@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Client SDK Test</title>
+    <script src="https://rammer.ai/lib/client.sdk.1.0.3.min.js"></script>
+</head>
+<body>
+<div>
+    <p>Live Recognition:</p>
+    <p id="live-recognition-text"></p><br/><br/>
+    <p>Transcript:</p>
+    <p id="transcription-text"></p><br/><br/>
+    <p>Detected Action Items:</p>
+    <p id="action-items"></p>
+</div>
+<script>
+    const sdk = rammerSdk;
+
+    const user = {
+        userId: 'toshish@rammer.ai',
+        name: 'Toshish'
+    };
+
+    let sendAudioFn = undefined;
+
+    const liveRecognitionText = document.getElementById('live-recognition-text');
+    const transcriptionText = document.getElementById('transcription-text');
+    const actionItems = document.getElementById('action-items');
+
+
+    function getUserMediaStream() {
+        return navigator.mediaDevices.getUserMedia({audio: true, video: false});
+    }
+
+    function getAudioContext(callback) {
+        getUserMediaStream().then(stream => {
+            console.log('Got the media stream: ', stream);
+            const audioContext = createAudioProcessingTopology(stream);
+            console.log('Sample rate: ', audioContext.sampleRate);
+            if (callback) callback(audioContext);
+        }).catch(err => {
+            console.error(err);
+        });
+    }
+
+    function processAudio(e) {
+        const inputData = e.inputBuffer.getChannelData(0) || new Float32Array(this.options.bufferSize);
+        // console.log(e.inputBuffer.duration);
+        const targetBuffer = new Int16Array(inputData.length);
+        for (let index = inputData.length; index > 0; index--)
+            targetBuffer[index] = 32767 * Math.min(1, inputData[index]);
+
+        return targetBuffer;
+    }
+
+    function createAudioProcessingTopology(stream) {
+        const context = new AudioContext();
+        const source = context.createMediaStreamSource(stream);
+
+        const processor = context.createScriptProcessor(4096, 1, 1);
+        source.connect(processor);
+        processor.connect(context.destination);
+
+        processor.onaudioprocess = (e) => {
+            sendAudioFn && sendAudioFn(processAudio(e));
+        };
+        return context;
+    }
+
+
+    const realTimeSessionId = 'session-1234'; // This should be a Unique ID and must be same for all the participants in single session. Use a good randomizer like UUIDs
+    sdk.init({
+        appId: '__yourAppId__',
+        appSecret: '__yourAppSecret__',
+        basePath: '__yourUrl__'
+    }).then(() => {
+        console.log('SDK Initialized.');
+
+        getAudioContext((audioContext) => {
+            const sampleRateHertz = audioContext.sampleRate;
+            sdk.startRealtimeRequest({
+                id: realTimeSessionId,
+                insightTypes: ["action_item"],
+                config: {
+                    meetingTitle: 'Rammer Test', // Give title of call/meeting
+                    confidenceThreshold: 0.5, // Higher the threshold more stricter the insight detection is
+                    timezoneOffset: 480, // Set the timezone offset of user
+                    languageCode: "en-US",
+                    speechRecognition: {
+                        sampleRateHertz // Sample rate of audio (L16)
+                    }
+                },
+                speaker: user,
+                handlers: {
+                    'onSpeechDetected': (data) => {
+                        if (data) {
+                            const {punctuated} = data;
+                            liveRecognitionText.innerText = punctuated && punctuated.transcript;
+                        }
+                    },
+                    'onMessageResponse': (data) => {
+                        if (data) {
+                            data.forEach(message => {
+                                transcriptionText.innerText = transcriptionText.innerText + `${message.from.name}: ${message.payload.content} \n`;
+                            });
+                        }
+
+                    },
+                    'onInsightResponse': (data) => {
+                        if (data) {
+                            data.forEach(insight => {
+                                actionItems.innerText = actionItems.innerText + `${insight.text} [${JSON.stringify(insight.tags)}] \n\n`;
+                            });
+                        }
+                    }
+                }
+            }).then(connection => {
+                console.log('Connection Started for speaker: ', user);
+                sendAudioFn = connection.sendAudio;
+                setTimeout(() => {
+                    connection.stop().then(() => {
+                        console.log('Connection stopped for speaker:', user);
+                    }).catch(console.error);
+                }, 30 * 1000); // Change this with your own stop logic
+            }).catch(console.error);
+
+        });
+
+    }).catch(err => console.error('Error in initialization.', err));
+</script>
+
+</body>
+</html>
