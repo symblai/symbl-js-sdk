@@ -54,12 +54,25 @@ export = {
 Importing the 'config.js' file
 
 ```js
-// If using commonJS style
+// If using CommonJS style
 const config = require('/path/to/config')
 
 // If using ES6 style
-import config from '/path/to/config'
+import { config } from '/path/to/config'
 ```
+
+## Importing SDK
+
+CommonJS style
+```js
+var sdk = require('/path/to/symbl-js').sdk;
+```
+
+ES6 style
+```js
+import { sdk } from '/path/to/symbl-js';
+```
+
 
 ## Initializing SDK
 
