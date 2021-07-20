@@ -4,7 +4,7 @@
   "description": "Client SDK for Rammer's Language Insights API Platform",
   "main": "build/app.bundle.js",
   "dependencies": {
-    "@rammerai/api-client": "^1.0.5",
+    "@rammerai/api-client": "^1.0.16",
     "detect-node": "^2.0.4",
     "loglevel": "^1.6.1",
     "long": "^4.0.0",
@@ -13,6 +13,7 @@
     "moment": "^2.23.0",
     "node-gyp": "^3.8.0",
     "p-queue": "^6.4.0",
+    "typescript": "^4.3.5",
     "uuid": "latest",
     "websocket": "^1.0.28"
   },
@@ -29,7 +30,7 @@
     "webpack-node-externals": "^1.7.2"
   },
   "scripts": {
-    "build": "webpack --config webpack/webpack.config.js --mode production"
+    "build": "tsc && webpack --config webpack/webpack.config.js --mode production"
   },
   "repository": {
     "type": "git",
