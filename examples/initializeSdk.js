@@ -1,6 +1,6 @@
-const {sdk} = require('../build/app.bundle');
+const { sdk } = require('../build/app.bundle');
 
-const APP_ID = "<insert App ID";
+const APP_ID = "<insert App ID>";
 const APP_SECRET = "<insert App Secret>";
 
 sdk.init({
