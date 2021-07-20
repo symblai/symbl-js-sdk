@@ -10,7 +10,7 @@ var nodeConfig = {
         'websocket': 'websocket',
         'formidable': 'formidable'
     },
-    entry: './dist/index.js',
+    entry: './build-tsc/index.js',
     resolve: {
         modules: ['node_modules/@rammerai/api-client/src', 'node_modules']
     },
@@ -40,7 +40,7 @@ var nodeConfig = {
 
 var browserConfig = {
     target: 'web',
-    entry: './dist/index.js',
+    entry: './build-tsc/index.js',
     resolve: {
         modules: ['node_modules/@rammerai/api-client/src', 'node_modules']
     },
