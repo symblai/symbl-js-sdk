@@ -5,6 +5,7 @@
   "main": "build/app.bundle.js",
   "dependencies": {
     "@rammerai/api-client": "^1.0.16",
+    "@types/window-or-global": "^1.0.4",
     "detect-node": "^2.0.4",
     "loglevel": "^1.6.1",
     "long": "^4.0.0",
