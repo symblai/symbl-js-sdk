@@ -1,31 +1,12 @@
-const { sdk } = require('../build/app.bundle');
-const { exec } = require('child_process');
+const {sdk} = require('../build/app.bundle');
 
 const mic = require('mic');
 
-const isMac = require('os').type() == 'Darwin';
-const isWindows = require('os').type().indexOf('Windows') > -1;
-
-const APP_ID = "47427768525353535765504f536961616d535a4b6d743556535a665855486f56";
-const APP_SECRET = "724e383877443456727551566f7357436c4657734b65724f74553442313837717a5964737747386170444434775250756f306371645679335f34424e33654451";
-
-let audioDevice = 'plughw:1,0'
-let audioRate = 16000
-
-if (!isMac && !isWindows) {
-   let audioDevices = [];
-   audioDevice = "hw:1,0"
-   exec('arecord --list-devices | grep card', (err, stdout) => {
-        if (err) return console.log(err)
-        console.log(stdout);
-    })
-} 
-
 const micInstance = mic({
-    rate: audioRate,
-    channels: '0',
+    rate: '16000',
+    channels: '1',
     debug: false,
-    exitOnSilence: 5
+    exitOnSilence: 6
 });
 
 const micInputStream = micInstance.getAudioStream();
@@ -41,11 +22,11 @@ const users = {
     }
 };
 
-const realtimeSessionId = '15263748';
+const realtimeSessionId = '1234';
 sdk.init({
-    appId: APP_ID,
-    appSecret: APP_SECRET,
-    basePath: 'https://api.symbl.ai',
+    appId: '71326970356130406d707a6965382e3370',
+    appSecret: 'db96e5501ed04ebfa616d885f51e2dad61b829a9f6484741b1ebd8ab9157b8e0',
+    basePath: 'https://oob-prod.rammer.ai',
     logLevel: 'debug'
 }).then(() => {
     console.log('SDK Initialized.');
