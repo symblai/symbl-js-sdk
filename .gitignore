@@ -2,5 +2,5 @@ node_modules/*
 .idea
 build
 *.mp3
-build-tsc
+dist
 *.wav
