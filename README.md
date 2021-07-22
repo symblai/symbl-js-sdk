@@ -171,7 +171,6 @@ const micInstance = mic({
               punctuated
             } = data
             console.log('Live: ', punctuated && punctuated.transcript)
-            console.log('');
           }
         }
       }
@@ -215,6 +214,81 @@ const micInstance = mic({
   } catch (e) {
     console.error('Error: ', e)
   }
+})();
+```
+## Transcribing live audio input through Telephony API
+
+As a simple test of the Telephony API you can call a phone number and see a live transcription of your phone call in the console.
+
+```js
+const { sdk } = require('symbl-node')
+
+const APP_ID = '<your App ID>';
+const APP_SECRET = '<your App Secret>';
+const PHONE_NUMBER = '<your phone number>';
+
+(async () => {
+    try {
+        // Initialize the SDK
+        await sdk.init({
+            appId: APP_ID,
+            appSecret: APP_SECRET,
+            basePath: 'https://api.symbl.ai',
+        })
+
+        // Start Real-time Request (Uses Real-time WebSocket API behind the scenes)
+        const connection = await sdk.startEndpoint({
+            endpoint: {
+                type: 'pstn',
+                phoneNumber: PHONE_NUMBER,
+            },
+            insightTypes: ['action_item', 'question'],
+            data: {
+                session: {
+                    name: 'My Test Meeting',
+                },
+            },
+        });
+
+        const { connectionId } = connection;
+        console.log('Successfully connected. Connection Id: ', connectionId);
+
+        // Subscribe to connection using connectionId.
+        sdk.subscribeToConnection(connectionId, (data) => {
+            const { type } = data;
+            if (type === 'transcript_response') {
+                const { payload } = data;
+
+                // You get live transcription here!!
+                console.log(`Live: ${payload && payload.content}`);
+
+            } else if (type === 'message_response') {
+                const { messages } = data;
+
+                // You get processed messages in the transcript here!!! Real-time but not live! :)
+                messages.forEach(message => {
+                    console.log(`Message: ${message.payload.content}`);
+                });
+            } else if (type === 'insight_response') {
+                const { insights } = data;
+                // You get any insights here!!!
+                insights.forEach(insight => {
+                    console.log(`Insight: ${insight.type} - ${insight.text}`);
+                });
+            }
+        });
+
+        // Stop call after 60 seconds to automatically.
+        setTimeout(async () => {
+            const connection = await sdk.stopEndpoint({
+                connectionId
+            });
+            console.log('Stopped the connection');
+            console.log('Conversation ID:', connection.conversationId);
+        }, 60 * 1000); // Change the 60 to however many seconds you want.
+    } catch (e) {
+        console.error('Error: ', e)
+    }
 })();
 ```
 
