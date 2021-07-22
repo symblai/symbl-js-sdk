@@ -112,15 +112,13 @@ As a simple test of the Streaming API you can simply setup a live microphone and
 npm install --save mic uuid
 ```
 
-Once you have `mic` and `uuid` installed you can then initialize the SDK and call the Streaming API endpoint.
+Once you have `mic` and `uuid` installed you can then initialize the SDK and connect via the built-in websocket connector. This will output the live transcription to the console.
 
 ```js
 const { sdk } = require('/path/to/symbl-js');
 
 const APP_ID = '<your App ID>';
 const APP_SECRET = '<your App Secret>';
-const EMAIL = '<your Email address>';
-const FULL_NAME = '<your name>';
 
 const mic = require('mic')
 
@@ -156,23 +154,23 @@ const micInstance = mic({
         languageCode: 'en-US',
         sampleRateHertz
       },
-      speaker: {
-        // Optional, if not specified, will simply not send an email in the end.
-        userId: EMAIL, 
-        name: FULL_NAME 
-      },
       handlers: {
         /**
          * This will return live speech-to-text transcription of the call.
+         * There are other handlers that can be seen in the full example.
          */
         onSpeechDetected: (data) => {
           if (data) {
-            const {punctuated} = data
+            const {
+              punctuated
+            } = data
             console.log('Live: ', punctuated && punctuated.transcript)
             console.log('');
           }
+        }
       }
     });
+
     console.log('Successfully connected. Conversation ID: ', connection.conversationId);
 
     const micInputStream = micInstance.getAudioStream()
