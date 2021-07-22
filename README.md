@@ -41,6 +41,18 @@ npm install
 npm run build
 ```
 
+## Importing the SDK
+
+CommonJS style
+```js
+const { sdk } = require('/path/to/symbl-js');
+```
+
+ES6 style
+```js
+import { sdk } from '/path/to/symbl-js';
+```
+
 ## Configuration
 
 The SDK needs to be initialized with your account's credentials (appId & appSecret) which is
@@ -70,19 +82,6 @@ const config = require('/path/to/config')
 // If using ES6 style
 import { config } from '/path/to/config'
 ``` -->
-
-## Importing SDK
-
-CommonJS style
-```js
-const { sdk } = require('/path/to/symbl-js');
-```
-
-ES6 style
-```js
-import { sdk } from '/path/to/symbl-js';
-```
-
 
 ## Initializing SDK
 
@@ -214,8 +213,6 @@ const micInstance = mic({
   }
 })();
 ```
-
-
 
 ## Need support
 
