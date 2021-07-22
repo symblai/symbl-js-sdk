@@ -224,6 +224,6 @@ If you can't find your answers, do let us know at support@symbl.ai or join our s
 [telephony_api-docs]: https://docs.symbl.ai/docs/telephony/introduction
 [async_text-docs]: https://docs.symbl.ai/docs/async-api/overview/text/post-text/
 [async_audio-docs]: https://docs.symbl.ai/docs/async-api/overview/audio/post-audio
-[examples]: https://github.com/symblai/symbl-js/tree/main/examples
+[examples]: https://github.com/symblai/symbl-js/tree/develop/examples
 [slack-invite]: https://symbldotai.slack.com/join/shared_invite/zt-4sic2s11-D3x496pll8UHSJ89cm78CA#/
 [web-sdk-link]: https://symbl.ai
