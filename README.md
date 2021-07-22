@@ -214,7 +214,7 @@ const micInstance = mic({
 
 ## Need support
 
-If you are looking for some specific use cases do check our [examples][examples] folder.
+If you are looking for some specific use cases and more in-depth examples do check our [examples][examples] folder.
 
 If you can't find your answers, do let us know at support@symbl.ai or join our slack channel [here][slack-invite].
 
