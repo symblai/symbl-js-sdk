@@ -30,7 +30,7 @@ want to use the Node.js package, then you can install it directly into your proj
 npm install symbl-node
 ```
 
-If you use the npm package, SDK import will not require an absolute path.
+If you use the npm package, SDK import will not require a relative path.
 
 ```js
 const { sdk } = require('symbl-node');
