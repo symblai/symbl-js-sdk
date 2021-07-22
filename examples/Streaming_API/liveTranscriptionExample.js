@@ -53,7 +53,7 @@ const micInstance = mic({
          */
         onSpeechDetected: (data) => {
           if (data) {
-            const {punctuated} = data
+            const { punctuated } = data
             console.log('Live: ', punctuated && punctuated.transcript)
             console.log('');
           }
@@ -63,19 +63,19 @@ const micInstance = mic({
          * When processed messages are available, this callback will be called.
          */
         onMessageResponse: (data) => {
-          // console.log('onMessageResponse', JSON.stringify(data, null, 2))
+          console.log('onMessageResponse', JSON.stringify(data, null, 2))
         },
         /**
          * When Symbl detects an insight, this callback will be called.
          */
         onInsightResponse: (data) => {
-          // console.log('onInsightResponse', JSON.stringify(data, null, 2))
+          console.log('onInsightResponse', JSON.stringify(data, null, 2))
         },
         /**
          * When Symbl detects a topic, this callback will be called.
          */
         onTopicResponse: (data) => {
-          // console.log('onTopicResponse', JSON.stringify(data, null, 2))
+          console.log('onTopicResponse', JSON.stringify(data, null, 2))
         }
       }
     });
