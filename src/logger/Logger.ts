@@ -1,6 +1,22 @@
 import isNode from 'detect-node';
 
-export class Logger {
+interface ILogger {
+    logger: any;
+    trace(value: string): void;
+    debug(...args: any[]): void;
+    log(...args: any[]): void;
+    info(...args: any[]): void;
+    warn(...args: any[]): void;
+    error(...args: any[]): void;
+    setLevel(level: string): void;
+    getLevel(): string;
+    setDefaultLevel(level: string): void;
+}
+
+declare var window: any;
+
+export class Logger implements ILogger {
+    logger: any;
 
     constructor() {
         if (isNode) {
@@ -35,7 +51,7 @@ export class Logger {
     }
 
     getLevel() {
-        this.logger.getLevel.apply(null, arguments);
+        return this.logger.getLevel.apply(null, arguments);
     }
 
     setDefaultLevel(level) {
@@ -69,6 +85,6 @@ export class Logger {
 
 }
 const logger = new Logger();
-logger.setLevel('warn');
+logger.setDefaultLevel('warn');
 
 export default logger;
