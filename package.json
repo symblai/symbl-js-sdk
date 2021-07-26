@@ -30,7 +30,7 @@
     "webpack-node-externals": "^1.7.2"
   },
   "scripts": {
-    "build": "webpack --config webpack/webpack.config.js --mode production"
+    "build": "tsc && webpack --config webpack/webpack.config.js --mode production"
   },
   "repository": {
     "type": "git",

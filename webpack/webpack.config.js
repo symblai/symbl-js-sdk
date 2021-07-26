@@ -10,7 +10,7 @@ var nodeConfig = {
         'websocket': 'websocket',
         'formidable': 'formidable'
     },
-    entry: './src/index.js',
+    entry: './dist/index.js',
     resolve: {
         modules: ['node_modules/@rammerai/api-client/src', 'node_modules']
     },
@@ -35,12 +35,15 @@ var nodeConfig = {
     },
     stats: {
         colors: true
+    },
+    optimization: {
+        minimize: false
     }
 };
 
 var browserConfig = {
     target: 'web',
-    entry: './src/index.js',
+    entry: './dist/index.js',
     resolve: {
         modules: ['node_modules/@rammerai/api-client/src', 'node_modules']
     },
