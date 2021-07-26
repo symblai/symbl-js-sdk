@@ -1,7 +1,6 @@
 import {ApiClient, AuthenticationApi, Grant} from '@rammerai/api-client';
-import config from '../../config.json';
+import config from '../config';
 import ErrorHandler from './ErrorHandler';
-import moment from 'moment';
 import logger from "../logger/Logger";
 
 export default class OAuth2 {
@@ -45,13 +44,13 @@ export default class OAuth2 {
         this.expiresIn = expiresIn;
         logger.trace('Token will expire in seconds: ', this.expiresIn);
 
-        this.updatedOn = moment();
+        this.updatedOn = new Date();
         logger.trace('Token updated on : ', this.updatedOn);
-        this.expiresOn = this.updatedOn.add(this.expiresIn, 'seconds');
+        this.expiresOn = new Date(this.updatedOn.getTime() + this.expiresIn * 1000)
         logger.trace('Token will expire on : ', this.expiresOn);
 
         if (this.automaticallyRefreshToken) {
-            this.refreshOn = this.expiresOn.subtract(this.refreshTimeBeforeExpiry, 'seconds');
+            this.refreshOn = new Date(this.expiresOn.getTime() - this.refreshTimeBeforeExpiry*1000);
             logger.trace('Token will be refreshed on: ', this.refreshOn);
             // const refreshDuration = moment.duration(this.refreshOn.diff(this.updatedOn)).asMilliseconds(); // In milliseconds
             const refreshDuration = (this.expiresIn - this.refreshTimeBeforeExpiry) * 1000;

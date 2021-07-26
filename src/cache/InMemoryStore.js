@@ -13,7 +13,7 @@ export default class InMemoryStore {
                 global.clientSdkStore = this.store;
             }
         } else {
-            if (window) {
+            if (typeof window!=="undefined") {
                 if (window.clientSdkStore) {
                     this.store = window.clientSdkStore;
                 } else {

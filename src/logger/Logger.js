@@ -10,7 +10,7 @@ export class Logger {
                 this.logger = require('loglevel');
                 global.clientSdkLogger = this.logger;
             }
-        } else if (window) {
+        } else if (typeof window!=="undefined") {
             if (window.clientSdkLogger) {
                 this.logger = window.clientSdkLogger;
             } else {

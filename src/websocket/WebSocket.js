@@ -70,7 +70,7 @@ export default class WebSocket {
                 'X-API-KEY': this.accessToken
             });
         } else {
-            if (!!window && window.WebSocket) {
+            if (typeof window!=="undefined" && window.WebSocket) {
                 const urlWithToken = `${this.url}?access_token=${this.accessToken}`;
                 this.webSocket = new window.WebSocket(urlWithToken, null, null, {
                     'X-API-KEY': this.accessToken
