@@ -1,8 +1,11 @@
 import ClientSDK from './ClientSDK';
 import _SpeakerEvent from './event/SpeakerEvent';
 import isNode from 'detect-node';
+
+declare var window: any;
+
 const sdk = new ClientSDK();
-if (!isNode) {
+if (typeof window!=="undefined") {
     window.ClientSDK = ClientSDK;
     window.rammerSdk = sdk;
     window.SpeakerEvent = _SpeakerEvent;
