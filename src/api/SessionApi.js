@@ -1,6 +1,6 @@
 import WebSocket from '../websocket/WebSocket';
 import logger from "../logger/Logger";
-import config from '../../config.json';
+import config from '../config';
 
 const webSocketConnectionStatus = {
     notAvailable: 'not_available',

@@ -3,7 +3,7 @@ import ErrorHandler from './ErrorHandler';
 import Connection, {status} from '../connection/Connection';
 import Cache from '../cache/Cache';
 import {ApiClient} from "@rammerai/api-client/src/index";
-import config from '../../config.json';
+import config from '../config';
 import logger from "../logger/Logger";
 
 export default class EndpointApi {

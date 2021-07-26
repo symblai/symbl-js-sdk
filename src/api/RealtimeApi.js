@@ -1,6 +1,6 @@
 import WebSocket from '../websocket/WebSocket';
 import logger from "../logger/Logger";
-import config from '../../config.json';
+import config from '../config';
 import {v4 as uuid} from 'uuid';
 
 const webSocketConnectionStatus = {
