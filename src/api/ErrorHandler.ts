@@ -9,28 +9,21 @@ const errors = {
     paymentRequired: `You don't have enough balance to perform this operation.`
 };
 
-interface IErrorHandler {
-    getError(err: any): {
-        internalError: any;
-        message?: undefined;
-    } | {
-        message: string;
-        internalError: any;
-    };
-}
+export default class ErrorHandler {
 
-export default class ErrorHandler implements IErrorHandler {
+    static getError(err: any) {
 
-    static getError(err) {
-        let message = errors.unhandledError;
+        let message:string = errors.unhandledError;
 
         if (err.internalError) {
             return {
                 internalError: err
             }
         }
-        if (err && err instanceof Error) {
-            const {status, response} = err;
+        if (err && err.status && err.response) {
+            const status:number = err.status; 
+            const response:any = err.response;
+
             if (status) {
                 // HTTP Codes: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
                 if (status >= 500 && status <= 511) {
@@ -60,12 +53,8 @@ export default class ErrorHandler implements IErrorHandler {
                 }
             }
             if (response && response.body) {
-                try {
-                    const resp = JSON.stringify(response.body, null, 2);
-                    message = message + '\n' + resp;
-                } catch (e) {
-                    message = message + "\n" + response.body;
-                }
+                const resp = JSON.stringify(response.body, null, 2);
+                message = message + '\n' + resp;
             }
         }
         return {
