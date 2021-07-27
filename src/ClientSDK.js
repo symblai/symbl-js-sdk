@@ -8,6 +8,7 @@ import logger from './logger/Logger';
 import isNode from 'detect-node';
 import {ApiClient} from '@rammerai/api-client';
 import EventApi from "./event/EventApi";
+import ErrorHandler from "./api/ErrorHandler";
 
 export default class ClientSDK {
 
@@ -15,6 +16,8 @@ export default class ClientSDK {
         this.oauth2 = new OAuth2();
         this.apiClient = null;
         this.cache = new Cache();
+        this.logger = logger;
+        this.errorHandler = ErrorHandler;
     }
 
     async init(options) {
