@@ -25,12 +25,11 @@ To install the Node.js, just visit the link below:
 You don't need this source code unless you want to modify the package. If you just
 want to use the Node.js package, then you can install it directly into your project with `npm`:
 
-<!-- may need to update the npm package -->
 ```sh
 npm install symbl-node
 ```
 
-If you use the npm package, SDK import will not require a relative path.
+If you use the npm package, the SDK import will not require a relative path.
 
 ```js
 const { sdk } = require('symbl-node');
@@ -49,12 +48,12 @@ npm run build
 
 ## Importing the SDK
 
-CommonJS style
+CommonJS style (typically used in Node.js)
 ```js
 const { sdk } = require('/path/to/symbl-js');
 ```
 
-ES6 style
+ES6 style (typically used in ECMAScript 2015+ browser-side code)
 ```js
 import { sdk } from '/path/to/symbl-js';
 ```
