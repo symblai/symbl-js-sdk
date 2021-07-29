@@ -4,7 +4,7 @@
 * Requires the `mic` and `uuid` packages to be installed from NPM `npm install mic uuid`.
 
 * Captures live microphone audio data by passing the data streaming from the `mic` instance into the Symbl API websocket connection.
-```
+```js
     // Creating the mic instance
     const micInstance = mic({
         rate: sampleRateHertz,
