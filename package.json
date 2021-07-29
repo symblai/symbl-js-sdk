@@ -1,7 +1,7 @@
 {
-  "name": "@rammerai/language-insights-client-sdk",
+  "name": "@symblai/symbl-node",
   "version": "1.0.12",
-  "description": "Client SDK for Rammer's Language Insights API Platform",
+  "description": "Javascript SDK for Symbl.ai's Language Insights API Platform",
   "main": "build/app.bundle.js",
   "dependencies": {
     "@rammerai/api-client": "^1.0.16",
@@ -61,7 +61,7 @@
   ],
   "author": "toshish",
   "bugs": {
-    "url": "https://github.com/rammerai/language-insights-client-sdk/issues"
+    "url": "https://github.com/symblai/symbl-node/issues"
   },
-  "homepage": "https://github.com/rammerai/language-insights-client-sdk#readme"
+  "homepage": "https://github.com/symblai/symbl-node"
 }
