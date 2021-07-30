@@ -15,14 +15,17 @@ interface ILogger {
 
 declare var window: any;
 
+/**
+ * Represents the logger
+ * @constructor
+ * Checks whether or not it's running in node
+ * or the browser and binds all methods from 
+ * the "loglevel" package to the Logger object
+ * to either the global or window objects.
+ */
 export class Logger implements ILogger {
     logger: any;
 
-    /**
-     * Constructor for the Logger class
-     * binds all methods from the `loglevel` package
-     * to the Logger object
-     */
     constructor() {
         if (isNode) {
             if (global.clientSdkLogger) {
