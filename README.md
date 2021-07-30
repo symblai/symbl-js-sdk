@@ -29,13 +29,11 @@ want to use the Node.js package, then you can install it directly into your proj
 npm install symbl-node
 ```
 
-If you use the npm package, the SDK import will not require a relative path.
+<!-- If you use the npm package, the SDK import will not require a relative path.
 
 ```js
 const { sdk } = require('symbl-node');
-```
-
-If you want to use the JS SDK in the browser, look at the Web SDK [here][web-sdk-link].
+``` -->
 
 ## Setup
 
@@ -46,7 +44,7 @@ npm install
 npm run build
 ```
 
-## Importing the SDK
+<!-- ## Importing the SDK
 
 CommonJS style (typically used in Node.js)
 ```js
@@ -56,7 +54,7 @@ const { sdk } = require('/path/to/symbl-js');
 ES6 style (typically used in ECMAScript 2015+ browser-side code)
 ```js
 import { sdk } from '/path/to/symbl-js';
-```
+``` -->
 
 ## Configuration
 
@@ -88,7 +86,7 @@ const config = require('/path/to/config')
 import { config } from '/path/to/config'
 ``` -->
 
-## Initializing SDK
+<!-- ## Initializing SDK
 
 To initialize with default API endpoints.
 ```js
@@ -106,8 +104,8 @@ sdk.init({
     appSecret: APP_SECRET,
     basePath: 'https://yourcustomdomain.rammer.ai'
 }).then(() => console.log('SDK Initialized.'))
-    .catch(err => console.error('Error in initialization.', err));
-```
+    .catch(err => console.error('Error in initialization.', err)); 
+```-->
 
 ## Transcribing live audio input through the microphone
 
@@ -120,7 +118,8 @@ npm install --save mic uuid
 Once you have `mic` and `uuid` installed you can then initialize the SDK and connect via the built-in websocket connector. This will output the live transcription to the console.
 
 ```js
-const { sdk } = require('/path/to/symbl-js');
+const { sdk } = require('symbl-node');
+const uuid = require('uuid').v4;
 
 const APP_ID = '<your App ID>';
 const APP_SECRET = '<your App Secret>';
@@ -151,7 +150,6 @@ const micInstance = mic({
     // Start Real-time Request (Uses Real-time WebSocket API behind the scenes)
     const connection = await sdk.startRealtimeRequest({
       id,
-      insightTypes: ['action_item', 'question'],
       config: {
         meetingTitle: 'My Test Meeting',
         confidenceThreshold: 0.7,
@@ -215,12 +213,15 @@ const micInstance = mic({
   }
 })();
 ```
+
+If you'd like to see a more involved examples, please take a look at the extended Streaming examples [here][].
+
 ## Transcribing live audio input through Telephony API
 
 As a simple test of the Telephony API you can call a phone number and see a live transcription of your phone call in the console.
 
 ```js
-const { sdk } = require('/path/to/symbl-js');
+const { sdk } = require('symbl-node');
 
 const APP_ID = '<your App ID>';
 const APP_SECRET = '<your App Secret>';
@@ -271,10 +272,7 @@ const PHONE_NUMBER = '<your phone number>';
             } else if (type === 'insight_response') {
                 const { insights } = data;
                 
-                // You get any insights here
-                insights.forEach(insight => {
-                    console.log(`Insight: ${insight.type} - ${insight.text}`);
-                });
+               symbl });
             }
         });
 
@@ -292,7 +290,7 @@ const PHONE_NUMBER = '<your phone number>';
 })();
 ```
 
-## Adding Events
+<!-- ## Adding Events
 An event can be defined as a single occurrence of a process. 
 
 Currently the only supported event type is `speaker` which is described below
@@ -427,7 +425,7 @@ const PHONE_NUMBER = '<your phone number>';
   }
 })
 
-```
+``` -->
 
 ## Need support?
 
@@ -436,11 +434,12 @@ If you are looking for some specific use cases and more in-depth examples do che
 If you can't find your answers, do let us know at support@symbl.ai or join our slack channel [here][slack-invite].
 
 [api-keys]: https://platform.symbl.ai/#/login
-[symbl-docs]: https://docs.symbl.ai/docs/
+[symbl-docs]: https://docs.symbl.ai/docs/javascript-sdk/introduction
 [streaming_api-docs]: https://docs.symbl.ai/docs/streamingapi/introduction
 [telephony_api-docs]: https://docs.symbl.ai/docs/telephony/introduction
 [async_text-docs]: https://docs.symbl.ai/docs/async-api/overview/text/post-text/
 [async_audio-docs]: https://docs.symbl.ai/docs/async-api/overview/audio/post-audio
-[examples]: https://github.com/symblai/symbl-js/tree/develop/examples
+[examples]: examples
 [slack-invite]: https://symbldotai.slack.com/join/shared_invite/zt-4sic2s11-D3x496pll8UHSJ89cm78CA#/
-[web-sdk-link]: https://symbl.ai
+[streaming-examples]: examples/Streaming-API
+[telephony-examples]: examples/Telephony-API
