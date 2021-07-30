@@ -22,7 +22,7 @@
     })
 ```
 
-* Returns insights through the connection `handlers` functions.
+* Returns data from Symbl API through the connection `handlers` functions.
 ```js
     handlers: {
         // This will return live speech-to-text transcription of the call.
