@@ -32,7 +32,7 @@ const PHONE_NUMBER = '<your phone number>';
             }, ],
             data: {
                 session: {
-                    name: 'My Test Meeting',
+                    name: 'My Test Meeting', // Set name for meeting
                 },
             },
         });

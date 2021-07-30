@@ -36,7 +36,7 @@ const micInstance = mic({
       id,
       insightTypes: ['action_item', 'question'],
       config: {
-        meetingTitle: 'My Test Meeting',
+        meetingTitle: 'My Test Meeting', // Set name for meeting
         confidenceThreshold: 0.7,
         timezoneOffset: 480, // Offset in minutes from UTC
         languageCode: 'en-US',
