@@ -214,7 +214,7 @@ const micInstance = mic({
 })();
 ```
 
-If you'd like to see a more involved examples, please take a look at the extended Streaming examples [here][Streaming-Examples].
+If you'd like to see a more in-depth examples, please take a look at the extended Streaming examples [here][Streaming-Examples].
 
 ## Transcribing live audio input through Telephony API
 
@@ -289,7 +289,8 @@ const PHONE_NUMBER = '<your phone number>';
     }
 })();
 ```
-If you'd like to see a more involved examples, please take a look at the extended Streaming examples [here][Telephony-Examples].
+If you'd like to see a more in-depth examples for the Telephony API, please take a look at the extended Telephony examples [here][Telephony-Examples].
+
 <!-- ## Adding Events
 An event can be defined as a single occurrence of a process. 
 
