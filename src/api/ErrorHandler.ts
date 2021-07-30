@@ -10,7 +10,13 @@ const errors = {
 };
 
 export default class ErrorHandler {
-
+    
+    /**
+     * Single method inside ErrorHandler class that takes in error parameters via an object
+     * and returns an object containing the error message as a string and the error object.
+     * @param {object} err - Error object
+     * @returns {object} - object containing message string and the error object itself.
+     */
     static getError(err: any) {
 
         let message:string = errors.unhandledError;
