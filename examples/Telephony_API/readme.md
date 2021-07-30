@@ -55,3 +55,71 @@
         }
     });
     ```
+
+### `pushingEvents.js`
+
+* An event can be defined as a single occurrence of a process. Currently the only supported event type is `speaker`. The `speaker` event is associated with different individual attendees in a conference. An example of speaker event is shown below
+
+    ```js
+    const speakerEvent = new SpeakerEvent({
+        type: SpeakerEvent.types.startedSpeaking,
+        user: {
+            userId: 'john@example.com',
+            name: 'John'
+        }
+    });
+    ```
+
+    In the above example the `user` needs to have `userId` key-value pair to uniquely identify the user.  It has the following types:
+    * ##### `started_speaking`
+        This event contains the details of the user who started speaking with the timestamp of when he started speaking.
+        
+        Example:
+        ```js
+        const speakerEvent = new SpeakerEvent({
+            type: SpeakerEvent.types.startedSpeaking,
+            user: {
+                userId: 'john@example.com',
+                name: 'John'
+            }
+        });        
+        ```
+    * ##### `stopped_speaking`
+        This event contains the details of the user who stopped speaking with the timestamp of when he stopped speaking.
+        
+        Example:
+        ```js
+        const speakerEvent = new SpeakerEvent({
+            type: SpeakerEvent.types.stoppedSpeaking,
+            user: {
+                userId: 'john@example.com',
+                name: 'John'
+            }
+        }); 
+        ```
+    * ##### `joined`
+        This event contains the details of user who just joined the conference call with the timestamp at which they joined.
+        
+        Example:
+        ```js
+        const speakerEvent = new SpeakerEvent({
+            type: SpeakerEvent.types.joined,
+            user: {
+                userId: 'john@example.com',
+                name: 'John'
+            }
+        });
+        ```
+    * ##### `left`
+        This event contains the details of user who just left the conference call with the timestamp at which they left.
+        
+        Example:
+        ```js
+        const speakerEvent = new SpeakerEvent({
+            type: SpeakerEvent.types.left,
+            user: {
+                userId: 'john@example.com',
+                name: 'John'
+            }
+        });
+        ```
