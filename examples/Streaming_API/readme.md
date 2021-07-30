@@ -28,9 +28,9 @@
         // This will return live speech-to-text transcription of the call.
         onSpeechDetected: (data) => {
             if (data) {
-            const { punctuated } = data
-            console.log('Live: ', punctuated && punctuated.transcript)
-            console.log('');
+                const { punctuated } = data
+                console.log('Live: ', punctuated && punctuated.transcript)
+                console.log('');
             }
             // console.log('onSpeechDetected ', JSON.stringify(data, null, 2));
         },
