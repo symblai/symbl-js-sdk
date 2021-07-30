@@ -4,7 +4,7 @@
 
 * Captures a live phone call via a phone number and a specification of what you'd like to collect.
 
-```js
+    ```js
     const connection = await sdk.startEndpoint({
         endpoint: {
             type: 'pstn',
@@ -26,10 +26,10 @@
             },
         },
     });
-```
+    ```
 
 * Uses the `subscribeToConnection` from the SDK to access the data that is being collected live.
-```js
+    ```js
     // Subscribe to connection using connectionId.
     await sdk.subscribeToConnection(connection.connectionId, (data) => {
         const { type } = data;
@@ -54,4 +54,4 @@
             });
         }
     });
-```
+    ```

@@ -1,10 +1,8 @@
 ## Streaming API Examples
 
 ### `streamingLiveMic.js`
-* Requires the `mic` and `uuid` packages to be installed from NPM `npm install mic uuid`.
-
 * Captures live microphone audio data by passing the data streaming from the `mic` instance into the Symbl API websocket connection.
-```js
+    ```js
     // Creating the mic instance
     const micInstance = mic({
         rate: sampleRateHertz,
@@ -20,10 +18,10 @@
     micInputStream.on('data', (data) => {
         connection.sendAudio(data)
     })
-```
+    ```
 
 * Returns data defined via the `insightTypes` from Symbl API through the connection `handlers` methods.
-```js
+    ```js
     const connection = await sdk.startRealtimeRequest({
         id,
         insightTypes: ['action_item', 'question'],
@@ -61,4 +59,4 @@
             }
         }
     })
-```
+    ```
