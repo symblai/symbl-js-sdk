@@ -1,11 +1,9 @@
 var path = require('path');
-var webpack = require('webpack');
-var nodeExternals = require('webpack-node-externals');
 var directory = __dirname + '/..';
 
+// Version for Node that uses websocket package and builds to a umd style package.
 var nodeConfig = {
     target: 'node',
-    //externals: [nodeExternals()],
     externals: {
         'websocket': 'websocket',
         'formidable': 'formidable'
@@ -35,12 +33,10 @@ var nodeConfig = {
     },
     stats: {
         colors: true
-    },
-    optimization: {
-        minimize: false
     }
 };
 
+// Version for browser that builds for a simple browser script src or import into Web SDK
 var browserConfig = {
     target: 'web',
     entry: './dist/index.js',
