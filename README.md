@@ -109,13 +109,9 @@ sdk.init({
 
 ## Transcribing live audio input through the microphone
 
-As a simple test of the Streaming API you can simply setup a live microphone and push the audio stream using the `mic` npm package and use the `uuid` package to create a unique meeting ID. First install the `mic` and `uuid` packages via npm.
+As a simple test of the Streaming API you can simply setup a live microphone and push the audio stream using the `mic` npm package and use the `uuid` package to create a unique meeting ID. 
 
-```sh
-npm install --save mic uuid
-```
-
-Once you have `mic` and `uuid` installed you can then initialize the SDK and connect via the built-in websocket connector. This will output the live transcription to the console.
+Initialize the SDK and connect via the built-in websocket connector. This will output the live transcription to the console.
 
 ```js
 const { sdk } = require('symbl-node');
