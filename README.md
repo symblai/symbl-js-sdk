@@ -441,5 +441,5 @@ If you can't find your answers, do let us know at support@symbl.ai or join our s
 [async_audio-docs]: https://docs.symbl.ai/docs/async-api/overview/audio/post-audio
 [examples]: examples
 [slack-invite]: https://symbldotai.slack.com/join/shared_invite/zt-4sic2s11-D3x496pll8UHSJ89cm78CA#/
-[streaming-examples]: examples/Streaming-API
-[telephony-examples]: examples/Telephony-API
+[streaming-examples]: examples/Streaming_API
+[telephony-examples]: examples/Telephony_API
