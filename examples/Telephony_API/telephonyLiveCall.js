@@ -46,13 +46,13 @@ const PHONE_NUMBER = '<your phone number>';
             if (type === 'transcript_response') {
                 const { payload } = data;
 
-                // You get live transcription here!!
+                // You get live transcription here.
                 console.log(`Live: ${payload && payload.content}`);
 
             } else if (type === 'message_response') {
                 const { messages } = data;
 
-                // You get processed messages in the transcript here!!! Real-time but not live! :)
+                // You get processed messages in the transcript here. Real-time but not live.
                 messages.forEach(message => {
                     console.log(`Message: ${message.payload.content}`);
                 });
@@ -72,7 +72,7 @@ const PHONE_NUMBER = '<your phone number>';
             });
             console.log('Stopped the connection');
             console.log('Conversation ID:', connection.conversationId);
-        }, 60 * 1000); // Change the 60000 with higher value if you want this to continue for more time.s
+        }, 60 * 1000); // Change the 60000 with higher value if you want this to continue for more time.
     } catch (e) {
         console.error('Error: ', e)
     }

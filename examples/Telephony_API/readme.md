@@ -36,13 +36,13 @@
         if (type === 'transcript_response') {
             const { payload } = data;
 
-            // You get live transcription here!!
+            // You get live transcription here
             console.log(`Live: ${payload && payload.content}`);
 
         } else if (type === 'message_response') {
             const { messages } = data;
 
-            // You get processed messages in the transcript here!!! Real-time but not live! :)
+            // You get processed messages in the transcript here. Real-time but not live.
             messages.forEach(message => {
                 console.log(`Message: ${message.payload.content}`);
             });
