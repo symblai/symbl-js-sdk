@@ -289,7 +289,7 @@ const PHONE_NUMBER = '<your phone number>';
     }
 })();
 ```
-
+If you'd like to see a more involved examples, please take a look at the extended Streaming examples [here][Telephony-Examples].
 <!-- ## Adding Events
 An event can be defined as a single occurrence of a process. 
 
