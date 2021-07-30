@@ -214,7 +214,7 @@ const micInstance = mic({
 })();
 ```
 
-If you'd like to see a more involved examples, please take a look at the extended Streaming examples [here][].
+If you'd like to see a more involved examples, please take a look at the extended Streaming examples [here][Streaming-Examples].
 
 ## Transcribing live audio input through Telephony API
 
