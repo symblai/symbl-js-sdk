@@ -1,4 +1,4 @@
-const { sdk } = require('../../build/app.bundle');
+const { sdk } = require('symbl-node');
 
 const APP_ID = '<your App ID>';
 const APP_SECRET = '<your App Secret>';
