@@ -1,0 +1,8 @@
+node_modules/*
+.idea
+build
+*.mp3
+dist
+*.wav
+coverage
+.vscode
