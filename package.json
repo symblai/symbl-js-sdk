@@ -1,6 +1,6 @@
 {
-  "name": "@symblai/symbl-node",
-  "version": "1.1.0",
+  "name": "@symblai/symbl-js",
+  "version": "1.1.1",
   "description": "Javascript SDK for Symbl.ai's Language Insights API Platform",
   "main": "build/app.bundle.js",
   "dependencies": {
@@ -49,7 +49,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/symblai/symbl-node.git"
+    "url": "git+https://github.com/symblai/symbl-js.git"
   },
   "keywords": [
     "client",
@@ -69,7 +69,7 @@
   ],
   "author": "toshish",
   "bugs": {
-    "url": "https://github.com/symblai/symbl-node/issues"
+    "url": "https://github.com/symblai/symbl-js/issues"
   },
-  "homepage": "https://github.com/symblai/symbl-node"
+  "homepage": "https://github.com/symblai/symbl-js"
 }
