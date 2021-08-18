@@ -1,4 +1,4 @@
-const { sdk } = require('symbl-node')
+const { sdk } = require('@symblai/symbl-js')
 
 const APP_ID = '<your App ID>';
 const APP_SECRET = '<your App Secret>';
