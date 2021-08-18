@@ -26,13 +26,13 @@ You don't need this source code unless you want to modify the package. If you ju
 want to use the Node.js package, then you can install it directly into your project with `npm`:
 
 ```sh
-npm install symbl-node
+npm install @symblai/symbl-js
 ```
 
 <!-- If you use the npm package, the SDK import will not require a relative path.
 
 ```js
-const { sdk } = require('symbl-node');
+const { sdk } = require('@symblai/symbl-js');
 ``` -->
 
 ## Setup
@@ -114,7 +114,7 @@ As a simple test of the Streaming API you can simply setup a live microphone and
 Initialize the SDK and connect via the built-in websocket connector. This will output the live transcription to the console.
 
 ```js
-const { sdk } = require('symbl-node');
+const { sdk } = require('@symblai/symbl-js');
 const uuid = require('uuid').v4;
 
 const APP_ID = '<your App ID>';
@@ -217,7 +217,7 @@ If you'd like to see a more in-depth examples for the Streaming API, please take
 As a simple test of the Telephony API you can call a phone number and see a live transcription of your phone call in the console.
 
 ```js
-const { sdk } = require('symbl-node');
+const { sdk } = require('@symblai/symbl-js');
 
 const APP_ID = '<your App ID>';
 const APP_SECRET = '<your App Secret>';
