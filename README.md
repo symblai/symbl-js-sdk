@@ -22,8 +22,7 @@ To install the Node.js, just visit the link below:
 
 - Windows/Mac/Linux: https://nodejs.org/en/download/
 
-You don't need this source code unless you want to modify the package. If you just
-want to use the Node.js package, then you can install it directly into your project with `npm`:
+You can then install the library directly on your machine using:
 
 ```sh
 npm install @symblai/symbl-js
@@ -35,26 +34,6 @@ npm install @symblai/symbl-js
 const { sdk } = require('@symblai/symbl-js');
 ``` -->
 
-## Setup
-
-Before you begin using the bundled package from source, you'll need to install NPM packages and build with webpack after cloning the git repository or unzipping downloaded source.
-
-```sh
-npm install
-npm run build
-```
-
-<!-- ## Importing the SDK
-
-CommonJS style (typically used in Node.js)
-```js
-const { sdk } = require('/path/to/symbl-js');
-```
-
-ES6 style (typically used in ECMAScript 2015+ browser-side code)
-```js
-import { sdk } from '/path/to/symbl-js';
-``` -->
 
 ## Configuration
 

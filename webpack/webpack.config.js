@@ -15,7 +15,8 @@ var nodeConfig = {
     output: {
         path: path.resolve(directory, 'build'),
         filename: 'app.bundle.js',
-        libraryTarget: 'umd'
+        libraryTarget: 'umd',
+        library: 'sdk'
     },
     module: {
         rules: [
@@ -45,7 +46,9 @@ var browserConfig = {
     },
     output: {
         path: path.resolve(directory, 'build'),
-        filename: 'client.sdk.min.js'
+        filename: 'client.sdk.min.js',
+        libraryTarget: 'commonjs2',
+        library: 'symbl'
     },
     module: {
         rules: [
