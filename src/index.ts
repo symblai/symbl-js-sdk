@@ -16,4 +16,4 @@ if (typeof window !== "undefined") {
 
 }
 
-export {ClientSDK as SDK, sdk, _SpeakerEvent as SpeakerEvent};
+export {ClientSDK as SDK, sdk, _SpeakerEvent as SpeakerEvent, Logger};
