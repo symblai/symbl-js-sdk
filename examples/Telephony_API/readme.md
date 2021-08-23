@@ -59,7 +59,7 @@
 
 ### `connectToZoom.js`
 
-You can read more about this integration [https://github.com/symblai/connect-symbl-to-zoom-without-ui](here).
+You can read more about this integration [here](https://github.com/symblai/connect-symbl-to-zoom-without-ui).
 
 ```js
 const {sdk, SpeakerEvent} = require("@symblai/symbl-js");
