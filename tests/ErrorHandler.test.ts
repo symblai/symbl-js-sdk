@@ -1,4 +1,4 @@
-import ErrorHandler from "./ErrorHandler"
+import ErrorHandler from "../src/api/ErrorHandler"
 
 test('getError() 500', () => {
     const error = {

@@ -43,7 +43,7 @@
     "webpack-node-externals": "^1.7.2"
   },
   "scripts": {
-    "test": "jest --silent src",
+    "test": "jest --silent tests",
     "watch": "tsc-watch --onSuccess \"npm run build\"",
     "build": "tsc && webpack --config webpack/webpack.config.js --mode production"
   },

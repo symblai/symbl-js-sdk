@@ -2,13 +2,29 @@
 
 The Symbl Javascript SDK provides convenient access to the Symbl API from applications written in the Javascript language via Node.js or directly in the browser. It includes a pre-defined set of classes for a simple and clear utilization of APIs.
 
+We are working diligently to support every Symbl API. Currently we support the following APIs:
+
+#### Supported
+
+* Streaming API
+* Subscribe API
+* Telephony API
+
+#### In Progress
+
+* Conversation API
+* Async API
+* Management API
+* Trackers API
+* Conversation Groups API
+
 ## Documentation
 
 See the [API docs](https://docs.symbl.ai/docs/).
 
 ### Requirements
 
-- Node.js 14+
+- Node.js 10+
 
 ## Installation
 
@@ -28,47 +44,20 @@ You can then install the library directly on your machine using:
 npm install @symblai/symbl-js
 ```
 
-<!-- If you use the npm package, the SDK import will not require a relative path.
-
-```js
-const { sdk } = require('@symblai/symbl-js');
-``` -->
-
 
 ## Configuration
 
 The SDK needs to be initialized with your account's credentials (appId & appSecret) which is
 available in your [Symbl Platform][api-keys].
 
-You can either provide the credentials by declaring constants or pass them directly when creating the SDK instance.
+You can either provide the credentials by declaring constants before SDK initilization or pass them directly when creating the SDK instance.
+
+Example:
 
 ```js
 const APP_ID='<app_id>'
 const APP_SECRET='<app_secret>'
-```
-<!-- Example for 'config.js' file
 
-```js
-export = {
-  'APP_ID':'<app_id>',
-  'APP_SECRET':'<app_secret>'
-}
-```
-
-Importing the 'config.js' file
-
-```js
-// If using CommonJS style
-const config = require('/path/to/config')
-
-// If using ES6 style
-import { config } from '/path/to/config'
-``` -->
-
-<!-- ## Initializing SDK
-
-To initialize with default API endpoints.
-```js
 sdk.init({
     appId: APP_ID,
     appSecret: APP_SECRET
@@ -76,15 +65,6 @@ sdk.init({
     .catch(err => console.error('Error in initialization.', err));
 ```
 
-If you have custom API domain, use the `basePath` option in `init()`.
-```js
-sdk.init({
-    appId: APP_ID,
-    appSecret: APP_SECRET,
-    basePath: 'https://yourcustomdomain.rammer.ai'
-}).then(() => console.log('SDK Initialized.'))
-    .catch(err => console.error('Error in initialization.', err)); 
-```-->
 
 ## Transcribing live audio input through the microphone
 
@@ -246,8 +226,10 @@ const PHONE_NUMBER = '<your phone number>';
                 })
             } else if (type === 'insight_response') {
                 const { insights } = data;
-                
-               symbl });
+                // You get any insights here!!!
+                insights.forEach(insight => {
+                    console.log(`Insight: ${insight.type} - ${insight.text}`);
+                });
             }
         });
 
