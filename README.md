@@ -7,8 +7,8 @@ We are working diligently to support every Symbl API. Currently we support the f
 #### Supported
 
 * Streaming API
-* Subscribe API
 * Telephony API
+* Subscribe API
 
 #### In Progress
 
