@@ -22,11 +22,8 @@ export default class SessionApi {
         }
 
         let basePath = options.basePath || config.basePath;
-        if (basePath.startsWith('https')) {
-            basePath = basePath.replace('https', 'wss')
-        } else if (basePath.startsWith('http')) {
-            basePath = basePath.replace('https', 'wss')
-        }
+        
+        basePath = basePath.replace(/^http/, 'ws');
 
         let session = "session";
         if (isStreaming) session = "v1";
