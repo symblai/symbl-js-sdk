@@ -47,6 +47,7 @@ export default class RealtimeApi {
         this.onInsightResponse = this.onInsightResponse.bind(this);
         this.onTrackerResponse = this.onTrackerResponse.bind(this);
         this.onTopicResponse = this.onTopicResponse.bind(this);
+        this.onDataReceived = this.onDataReceived.bind(this);
 
         this.sendAudio = this.sendAudio.bind(this);
         this.sendStart = this.sendStart.bind(this);
@@ -94,6 +95,7 @@ export default class RealtimeApi {
                     this.onTopicResponse(data.topics);
                 }
             }
+            this.onDataReceived(data);
         }
     }
 
@@ -230,6 +232,14 @@ export default class RealtimeApi {
         if (this.handlers.onSpeechDetected) {
             setImmediate(() => {
                 this.handlers.onSpeechDetected(data);
+            });
+        }
+    }
+
+    onDataReceived(data) {
+        if (this.handlers.onDataReceived) {
+            setImmediate(() => {
+                this.handlers.onDataReceived(data);
             });
         }
     }
