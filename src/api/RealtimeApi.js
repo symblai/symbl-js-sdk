@@ -16,7 +16,7 @@ export default class RealtimeApi {
 
     constructor(options = {}, oauth2) {
         let basePath = options.basePath || config.basePath;
-        basePath = basePath.replace(/^http/, 'ws')
+        basePath = basePath.replace(/^http/, 'ws');
         const uri = `${basePath}/v1/realtime/insights`;
 
         if (!oauth2) {
