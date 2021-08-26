@@ -1,4 +1,4 @@
-import logger from "./Logger"
+import logger from "../src/logger/Logger"
 
 test('Logger getLevel() works', () => {
     expect(logger.getLevel() === "warn");
