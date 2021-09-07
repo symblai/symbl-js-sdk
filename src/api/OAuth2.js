@@ -66,59 +66,73 @@ export default class OAuth2 {
         }
     }
 
-    init(appId, appSecret) {
+    init(appId, appSecret, appToken) {
         if (arguments.length < 2) {
             throw new Error(`Expected number of arguments 2, detected: ${arguments.length}`);
         }
 
-        if (!appId) {
-            throw new Error('appId is required.');
-        }
+        if (appToken) {
+            return new Promise((resolve, reject) => {
+                this.activeToken = appToken;
+                logger.trace('Token received.');
+                this.apiClient.authentications.jwt.apiKey = this.activeToken;
+                resolve({
+                    accessToken: appToken
+                })
+            });
+        } else {
 
-        if (!appSecret) {
-            throw new Error('appSecret is required.');
-        }
-
-        this.appId = appId;
-        this.appSecret = appSecret;
-
-        return new Promise((resolve, reject) => {
-            logger.trace(`Initializing app with appId and appSecret`, appId, appSecret);
-            try {
-                const grant = Grant.constructFromObject({
-                    type: 'application',
-                    appId,
-                    appSecret
-                });
-                this.authenticationApi.generateToken(grant, (err, data) => {
-                    if (err) {
-                        if (err.status && err.status === 401) {
-                            const message = 'Combination of appId and appSecret is not valid.';
-                            logger.info(message);
-                            reject({
-                                message,
-                                internalError: err
-                            });
-                        } else {
-                            reject(ErrorHandler.getError(err));
-                        }
-                    } else if (data) {
-                        this.processTokenResult(data);
-                        const {accessToken, expiresIn} = data;
-                        resolve({
-                            accessToken: accessToken,
-                            expiresIn: expiresIn
-                        });
-
-                    } else {
-                        reject(ErrorHandler.getError());
-                    }
-                });
-            } catch (e) {
-                reject(ErrorHandler.getError(e));
+            if (!appId) {
+                throw new Error('appId is required.');
             }
 
-        });
+            if (!appSecret) {
+                throw new Error('appSecret is required.');
+            }
+
+            this.appId = appId;
+            this.appSecret = appSecret;
+
+            return new Promise((resolve, reject) => {
+                logger.trace(`Initializing app with appId and appSecret`, appId, appSecret);
+                try {
+                    const grant = Grant.constructFromObject({
+                        type: 'application',
+                        appId,
+                        appSecret
+                    });
+                    this.authenticationApi.generateToken(grant, (err, data) => {
+                        if (err) {
+                            if (err.status && err.status === 401) {
+                                const message = 'Combination of appId and appSecret is not valid.';
+                                logger.info(message);
+                                reject({
+                                    message,
+                                    internalError: err
+                                });
+                            } else {
+                                reject(ErrorHandler.getError(err));
+                            }
+                        } else if (data) {
+                            this.processTokenResult(data);
+                            const {accessToken, expiresIn} = data;
+                            resolve({
+                                accessToken: accessToken,
+                                expiresIn: expiresIn
+                            });
+
+                        } else {
+                            reject(ErrorHandler.getError());
+                        }
+                    });
+                } catch (e) {
+                    reject(ErrorHandler.getError(e));
+                }
+
+            });
+
+        }
+
     }
 
 
