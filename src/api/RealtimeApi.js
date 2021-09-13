@@ -25,7 +25,7 @@ const webSocketConnectionStatus = {
 
 /**
  * Causes a pause in execution for a specified amount of time
- * @param {integer} ms - milliseconds to sleep
+ * @param {float} ms - milliseconds to sleep
  * @returns a Promise with a setTimeout of the time provided
  */
 const sleep = (ms) => {
