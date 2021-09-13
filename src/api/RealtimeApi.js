@@ -1,31 +1,154 @@
-import WebSocket from '../websocket/WebSocket';
+/* eslint-disable arrow-body-style */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable max-len */
+/* eslint-disable sort-keys */
+/* eslint-disable no-plusplus */
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+/* eslint-disable capitalized-comments */
+/* eslint-disable max-lines */
+import Config from "../config";
+import WebSocket from "../websocket/WebSocket";
 import logger from "../logger/Logger";
-import config from '../config';
-import {v4 as uuid} from 'uuid';
+import {
+    v4 as uuid
+} from "uuid";
+// import { nullLiteral } from "@babel/types";
 
 const webSocketConnectionStatus = {
-    notAvailable: 'not_available',
-    notConnected: 'not_connected',
-    connected: 'connected',
-    error: 'error',
-    closed: 'closed',
-    connecting: 'connecting'
+    "closed": "closed",
+    "connected": "connected",
+    "connecting": "connecting",
+    "error": "error",
+    "notAvailable": "not_available",
+    "notConnected": "not_connected"
 };
+
+/**
+ * Causes a pause in execution for a specified amount of time
+ * @param {integer} ms - milliseconds to sleep
+ * @returns a Promise with a setTimeout of the time provided
+ */
+const sleep = (ms) => {
+
+    // eslint-disable-next-line no-promise-executor-return
+    return new Promise((resolve) => {
+
+        setTimeout(
+            resolve,
+            ms
+        );
+
+    });
+
+};
+
+/**
+ * Inverse Exponential backoff for waiting retries of function
+ * @param {object} ieb - inverse exponential backoff object
+ * @param {function} fn - function to call after sleep
+ * @returns the provided function and executes it
+ */
+const iEBackoff = async (ieb, fn) => {
+
+    if (ieb.retries === 0) {
+
+        throw new Error("No more retries left");
+
+    }
+
+    await sleep(ieb.nextDelay);
+
+    ieb.retries -= 1;
+
+    const newBackoffTime = ieb.nextDelay * ieb.factor;
+
+    if (newBackoffTime > ieb.min) {
+
+        ieb.nextDelay = newBackoffTime;
+
+    } else {
+
+        ieb.nextDelay = ieb.min;
+
+    }
+
+    return fn();
+
+};
+
+/**
+ * Returns a new inverse exponential backoff object
+ * @param {integer} max - max delay time in milliseconds
+ * @param {integer} min - min delay time in milliseconds
+ * @param {float} factor - factor to multiply by
+ * @param {integer} maxRetries - maximum number of retries
+ */
+// eslint-disable-next-line max-params
+const newIEBackoff = (max = 5000, min = 100, factor = 0.75, maxRetries = 10) => {
+
+    if (!factor) {
+
+        throw new Error("Please provide a factor");
+
+    }
+    if (factor >= 1.0 || factor <= 0.0) {
+
+        throw new Error("Backoff factor should be between 0 and 1");
+
+    }
+
+    return {
+        max,
+        min,
+        factor,
+        "retries": maxRetries,
+        "nextDelay": max
+    };
+
+};
+
 
 export default class RealtimeApi {
 
-    constructor(options = {}, oauth2) {
-        let basePath = options.basePath || config.basePath;
-        basePath = basePath.replace(/^http/, 'ws');
+    // eslint-disable-next-line default-param-last
+    constructor (options = {}, oauth2) {
+
+        let basePath = options.basePath || Config.basePath;
+        basePath = basePath.replace(
+            /^http/u,
+            "ws"
+        );
         const uri = `${basePath}/v1/realtime/insights`;
 
         if (!oauth2) {
-            throw new Error('oauth2 is required for Real-time API.');
+
+            throw new Error("oauth2 is required for Real-time API.");
+
         }
 
-        const {id} = options;
+        const {
+            id
+        } = options;
 
-        this.id = id ? id : uuid();
+        // eslint-disable-next-line no-ternary
+        this.id = id
+            ? id
+            : uuid();
+
+        if (options.backoff) {
+
+            this.backoff = newIEBackoff(
+                options.backoff.max,
+                options.backoff.min,
+                options.backoff.factor,
+                options.backoff.maxRetries
+            );
+
+        } else {
+
+            this.backoff = newIEBackoff();
+
+        }
 
         this.webSocketUrl = `${uri}/${this.id}`;
         this.options = options;
@@ -53,223 +176,382 @@ export default class RealtimeApi {
 
         this.retryCount = 0;
         this.requestStarted = false;
+
     }
 
-    onErrorWebSocket(err) {
+    onErrorWebSocket (err) {
+
         this.webSocketStatus = webSocketConnectionStatus.error;
         logger.error(err);
+
     }
 
-    onMessageWebSocket(result) {
-        // console.log(result);
+    onMessageWebSocket (result) {
+
         // Incoming results for this connection
         if (result) {
-            const data = JSON.parse(result);
-            if (data.type === 'message') {
-                const {message: {type}} = data;
 
-                if (type === 'recognition_started') {
+            const data = JSON.parse(result);
+            if (data.type === "message") {
+
+                const {
+                    "message": {
+                        type
+                    }
+                } = data;
+
+                switch (type) {
+
+                case "recognition_started":
                     this.onRequestStart(data.message);
-                } else if (type === 'recognition_result') {
+                    break;
+                case "recognition_result":
                     this.onSpeechDetected(data.message);
-                } else if (type === 'recognition_stopped') {
-                    // console.log('Recognition stopped received');
-                    // this.onRequestStop();
-                } else if (type === 'conversation_completed') {
+                    break;
+                case "recognition_stopped":
+
+                    /*
+                     * console.log('Recognition stopped received');
+                     * this.onRequestStop();
+                     */
+
+                    break;
+                case "conversation_completed":
                     this.onRequestStop(data.message);
-                } else if (type === 'error') {
+                    break;
+                case "error":
                     this.onRequestError(data);
+                    break;
+                default:
+                    break;
+
                 }
+
             } else {
-                if (data.type === 'message_response') {
+
+                switch (data.type) {
+
+                case "message_response":
                     this.onMessageResponse(data.messages);
-                } else if (data.type === 'insight_response') {
+                    break;
+                case "insight_response":
                     this.onInsightResponse(data.insights);
-                } else if (data.type === 'tracker_response') {
+                    break;
+                case "tracker_response":
                     this.onTrackerResponse(data.trackers);
-                } else if (data.type === 'topic_response') {
+                    break;
+                case "topic_response":
                     this.onTopicResponse(data.topics);
+                    break;
+                default:
+                    break;
+
                 }
+
             }
             this.onDataReceived(data);
+
         }
+
     }
 
-    onCloseWebSocket() {
-        logger.debug('WebSocket Closed.');
+    onCloseWebSocket () {
+
+        logger.debug("WebSocket Closed.");
         this.webSocketStatus = webSocketConnectionStatus.closed;
+
     }
 
-    onConnectWebSocket() {
-        logger.debug('WebSocket Connected.');
+    onConnectWebSocket () {
+
+        logger.debug("WebSocket Connected.");
         this.webSocketStatus = webSocketConnectionStatus.connected;
+
     }
 
-    connect() {
-        logger.debug('WebSocket Connecting.');
+    connect () {
+
+        logger.debug("WebSocket Connecting.");
         this.webSocketStatus = webSocketConnectionStatus.connecting;
         this.webSocket = new WebSocket({
-            url: this.webSocketUrl,
-            accessToken: this.oauth2.activeToken,
-            onError: this.onErrorWebSocket,
-            onClose: this.onCloseWebSocket,
-            onMessage: this.onMessageWebSocket,
-            onConnect: this.onConnectWebSocket
+            "accessToken": this.oauth2.activeToken,
+            "onClose": this.onCloseWebSocket,
+            "onConnect": this.onConnectWebSocket,
+            "onError": this.onErrorWebSocket,
+            "onMessage": this.onMessageWebSocket,
+            "url": this.webSocketUrl
         });
+
     }
 
-    onRequestStart(message) {
+    onRequestStart (message) {
+
         if (this.requestStartedResolve) {
-            this.requestStartedResolve(message.data && message.data.conversationId);
-            this.requestStartedResolve = undefined;
+
+            this.requestStartedResolve(message.data &&
+                message.data.conversationId);
+            this.requestStartedResolve = null;
+
         }
+
     }
 
-    onRequestStop(conversationData) {
+    onRequestStop (conversationData) {
+
         if (this.requestStoppedResolve) {
+
             this.requestStoppedResolve(conversationData);
-            this.requestStoppedResolve = undefined;
+            this.requestStoppedResolve = null;
+
         }
         this.webSocket.disconnect();
+
     }
 
-    onRequestError(err) {
+    onRequestError (err) {
+
         if (this.requestErrorReject) {
+
             this.requestErrorReject(err);
-            this.requestErrorReject = undefined;
+            this.requestErrorReject = null;
+
         }
+
     }
 
-    sendStart(resolve, reject) {
-        const {insightTypes, config, speaker, trackers, customVocabulary, } = this.options;
+    sendStart (resolve, reject) {
+
+        const {
+            insightTypes,
+            config,
+            speaker,
+            trackers,
+            customVocabulary
+        } = this.options;
         if (config) {
+
             const speechRecognition = {};
             if (!config.sampleRateHertz) {
-                throw new Error("sampleRateHertz must be provided.")
-            } else if (typeof config.sampleRateHertz !== 'number') {
-                throw new Error("sampleRateHertz must be a valid number")
+
+                throw new Error("sampleRateHertz must be provided.");
+
+            } else if (typeof config.sampleRateHertz !== "number") {
+
+                throw new Error("sampleRateHertz must be a valid number");
+
             }
-            Object.keys(config).forEach(key => {
+            Object.keys(config).forEach((key) => {
+
                 switch (key) {
-                    case 'engine':
-                    case 'encoding':
-                    case 'sampleRateHertz':
-                    case 'interimResults':
-                        speechRecognition[key] = config[key];
-                        delete config[key];
-                        break;
-                    default:
-                        break;
+
+                case "engine":
+                case "encoding":
+                case "sampleRateHertz":
+                case "interimResults":
+                    speechRecognition[key] = config[key];
+                    delete config[key];
+                    break;
+                default:
+                    break;
+
                 }
+
             });
 
             if (Object.keys(speechRecognition).length > 0) {
-                config['speechRecognition'] = speechRecognition;
+
+                config.speechRecognition = speechRecognition;
+
             }
+
         }
-        logger.debug('Send start request.');
+        logger.debug("Send start request.");
         this.requestStartedResolve = resolve;
         this.onRequestError = reject;
         this.requestStarted = true;
         this.webSocket.send(JSON.stringify({
-            type: 'start_request',
-            insightTypes: insightTypes || [],
+            "type": "start_request",
+            "insightTypes": insightTypes || [],
             config,
             speaker,
             trackers,
-            customVocabulary,
+            customVocabulary
         }));
+
     }
 
-    startRequest() {
+    startRequest () {
+
         return new Promise((resolve, reject) => {
+
             if (this.webSocketStatus === webSocketConnectionStatus.connected) {
-                this.sendStart(resolve, reject);
+
+                this.sendStart(
+                    resolve,
+                    reject
+                );
+
             } else {
-                logger.info('WebSocket is connecting. Retry will be attempted.', this.webSocketStatus);
+
+                logger.info(
+                    "WebSocket is connecting. Retry will be attempted.",
+                    this.webSocketStatus
+                );
                 const retry = () => {
-                    if (this.retryCount < 3 && !this.requestStarted) {
-                        logger.info('Retry attempt: ', this.retryCount);
-                        if (this.webSocketStatus === webSocketConnectionStatus.connected) {
-                            this.sendStart(resolve, reject);
-                            this.retryCount = 0;
+
+                    if (!this.requestStarted) {
+
+                        logger.info(
+                            "Retry attempt: ",
+                            this.retryCount
+                        );
+                        if (this.webSocketStatus ===
+                            webSocketConnectionStatus.connected) {
+
+                            this.sendStart(
+                                resolve,
+                                reject
+                            );
+
                         } else {
-                            this.retryCount++;
-                            setTimeout(retry.bind(this), 1000 * this.retryCount);
+
+                            iEBackoff(
+                                this.backoff,
+                                retry.bind(this)
+                            );
+
                         }
+
                     }
+
+                    this.retryCount += 1;
+
                 };
-                setTimeout(retry.bind(this), 500);
+
+                iEBackoff(
+                    this.backoff,
+                    retry.bind(this)
+                );
+
             }
+
         });
+
     }
 
-    stopRequest() {
+    stopRequest () {
+
         return new Promise((resolve, reject) => {
+
             if (this.webSocketStatus === webSocketConnectionStatus.connected) {
-                logger.debug('Send stop request.');
+
+                logger.debug("Send stop request.");
                 this.requestStoppedResolve = resolve;
                 this.onRequestError = reject;
                 this.webSocket.send(JSON.stringify({
-                    type: 'stop_request',
+                    "type": "stop_request"
                 }));
+
             } else {
-                logger.warn('WebSocket connection is not connected. No stop request sent.');
+
+                // eslint-disable-next-line max-len
+                logger.warn("WebSocket connection is not connected. No stop request sent.");
                 resolve();
+
             }
+
         });
+
     }
 
-    sendAudio(data) {
+    sendAudio (data) {
+
         this.webSocket.send(data);
+
     }
 
-    onSpeechDetected(data) {
+    onSpeechDetected (data) {
+
         if (this.handlers.onSpeechDetected) {
+
             setImmediate(() => {
+
                 this.handlers.onSpeechDetected(data);
+
             });
+
         }
+
     }
 
-    onDataReceived(data) {
+    onDataReceived (data) {
+
         if (this.handlers.onDataReceived) {
+
             setImmediate(() => {
+
                 this.handlers.onDataReceived(data);
+
             });
+
         }
+
     }
 
-    onMessageResponse(messages) {
+    onMessageResponse (messages) {
+
         if (this.handlers.onMessageResponse) {
+
             setImmediate(() => {
+
                 this.handlers.onMessageResponse(messages);
+
             });
+
         }
+
     }
 
-    onInsightResponse(messages) {
+    onInsightResponse (messages) {
+
         if (this.handlers.onInsightResponse) {
+
             setImmediate(() => {
+
                 this.handlers.onInsightResponse(messages);
+
             });
+
         }
+
     }
 
-    onTrackerResponse(trackers) {
+    onTrackerResponse (trackers) {
+
         if (this.handlers.onTrackerResponse) {
+
             setImmediate(() => {
+
                 this.handlers.onTrackerResponse(trackers);
+
             });
+
         }
+
     }
 
-    onTopicResponse(topics) {
+    onTopicResponse (topics) {
+
         if (this.handlers.onTopicResponse) {
+
             setImmediate(() => {
+
                 this.handlers.onTopicResponse(topics);
+
             });
+
         }
+
     }
 
 }
