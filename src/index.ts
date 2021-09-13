@@ -1,3 +1,8 @@
+// / <reference path="./types/base.ts" />
+// / <reference path="./types/conversation.ts" />
+// / <reference path="./types/responses.ts" />
+// / <reference path="./types/realtime.ts" />
+
 import ClientSDK from "./ClientSDK";
 import {Logger} from "./logger/Logger";
 import _SpeakerEvent from "./event/SpeakerEvent";
