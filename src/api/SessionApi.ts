@@ -15,7 +15,22 @@ const webSocketConnectionStatus = {
 
 export default class SessionApi {
 
-    constructor (options = {}, oauth2) {
+    oauth2: OAuth2Object;
+
+    id: string;
+
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    callback: Function;
+
+    webSocketUrl: string;
+
+    options: SessionOptions;
+
+    webSocket: WebSocket;
+
+    webSocketStatus: string;
+
+    constructor (options: SessionOptions, oauth2: OAuth2Object) {
 
         const {callback} = options;
         const {isStreaming} = options;
@@ -71,7 +86,7 @@ export default class SessionApi {
 
     }
 
-    onCloseWebSocket () {
+    onCloseWebSocket (): void {
 
         logger.debug(
             new Date().toISOString(),
@@ -81,21 +96,21 @@ export default class SessionApi {
 
     }
 
-    onConnectWebSocket () {
+    onConnectWebSocket (): void {
 
         logger.debug("WebSocket Connected.");
         this.webSocketStatus = webSocketConnectionStatus.connected;
 
     }
 
-    onErrorWebSocket (err) {
+    onErrorWebSocket (err: string): void {
 
         this.webSocketStatus = webSocketConnectionStatus.error;
         logger.error(err);
 
     }
 
-    onMessageWebSocket (result) {
+    onMessageWebSocket (result: string): void {
 
         // Expecting insight data
         if (result) {
@@ -111,7 +126,7 @@ export default class SessionApi {
 
     }
 
-    connect () {
+    connect (): void {
 
         logger.debug(`WebSocket Connecting on: ${this.webSocketUrl}`);
         this.webSocketStatus = webSocketConnectionStatus.connecting;
@@ -126,7 +141,7 @@ export default class SessionApi {
 
     }
 
-    disconnect () {
+    disconnect (): void {
 
         logger.debug("Disconnecting WebSocket Connection");
         this.webSocket.disconnect();
