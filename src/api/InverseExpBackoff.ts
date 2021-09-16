@@ -1,3 +1,5 @@
+import logger from "../logger/Logger";
+
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable arrow-body-style */
 /**
@@ -55,9 +57,16 @@ export default class IEBackoff {
      */
     async run (fn: Function): Promise<Function> {
 
+        if (!fn || typeof fn !== "function") {
+
+            // eslint-disable-next-line max-len
+            logger.error("Please provide a callback function to be run after the inverse exponential backoff delay");
+
+        }
+
         if (this.retries === 0) {
 
-            throw new Error("No more retries left");
+            logger.error("No more retries left");
 
         }
 
