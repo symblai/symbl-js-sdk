@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 /* eslint-disable arrow-body-style */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable max-len */
@@ -7,12 +8,12 @@
 /* eslint-disable capitalized-comments */
 /* eslint-disable max-lines */
 import Config from "../config";
+import IEBackoff from "./InverseExpBackoff";
 import WebSocket from "../websocket/WebSocket";
 import logger from "../logger/Logger";
 import {
     v4 as uuid
 } from "uuid";
-// import { nullLiteral } from "@babel/types";
 
 const webSocketConnectionStatus = {
     "closed": "closed",
@@ -22,91 +23,6 @@ const webSocketConnectionStatus = {
     "notAvailable": "not_available",
     "notConnected": "not_connected"
 };
-
-/**
- * Causes a pause in execution for a specified amount of time
- * @param {float} ms - milliseconds to sleep
- * @returns a Promise with a setTimeout of the time provided
- */
-const sleep = (ms) => {
-
-    // eslint-disable-next-line no-promise-executor-return
-    return new Promise((resolve) => {
-
-        setTimeout(
-            resolve,
-            ms
-        );
-
-    });
-
-};
-
-/**
- * Inverse Exponential backoff for waiting retries of function
- * @param {object} ieb - inverse exponential backoff object
- * @param {function} fn - function to call after sleep
- * @returns the provided function and executes it
- */
-const iEBackoff = async (ieb, fn) => {
-
-    if (ieb.retries === 0) {
-
-        throw new Error("No more retries left");
-
-    }
-
-    await sleep(ieb.nextDelay);
-
-    ieb.retries -= 1;
-
-    const newBackoffTime = ieb.nextDelay * ieb.factor;
-
-    if (newBackoffTime > ieb.min) {
-
-        ieb.nextDelay = newBackoffTime;
-
-    } else {
-
-        ieb.nextDelay = ieb.min;
-
-    }
-
-    return fn();
-
-};
-
-/**
- * Returns a new inverse exponential backoff object
- * @param {integer} max - max delay time in milliseconds
- * @param {integer} min - min delay time in milliseconds
- * @param {float} factor - factor to multiply by
- * @param {integer} maxRetries - maximum number of retries
- */
-// eslint-disable-next-line max-params
-const newIEBackoff = (max = 5000, min = 100, factor = 0.75, maxRetries = 10) => {
-
-    if (!factor) {
-
-        throw new Error("Please provide a factor");
-
-    }
-    if (factor >= 1.0 || factor <= 0.0) {
-
-        throw new Error("Backoff factor should be between 0 and 1");
-
-    }
-
-    return {
-        max,
-        min,
-        factor,
-        "retries": maxRetries,
-        "nextDelay": max
-    };
-
-};
-
 
 export default class RealtimeApi {
 
@@ -137,7 +53,7 @@ export default class RealtimeApi {
 
         if (options.backoff) {
 
-            this.backoff = newIEBackoff(
+            this.backoff = new IEBackoff(
                 options.backoff.max,
                 options.backoff.min,
                 options.backoff.factor,
@@ -146,7 +62,7 @@ export default class RealtimeApi {
 
         } else {
 
-            this.backoff = newIEBackoff();
+            this.backoff = new IEBackoff();
 
         }
 
@@ -415,10 +331,7 @@ export default class RealtimeApi {
 
                         } else {
 
-                            iEBackoff(
-                                this.backoff,
-                                retry.bind(this)
-                            );
+                            this.backoff.run(retry.bind(this));
 
                         }
 
@@ -428,10 +341,7 @@ export default class RealtimeApi {
 
                 };
 
-                iEBackoff(
-                    this.backoff,
-                    retry.bind(this)
-                );
+                this.backoff.run(retry.bind(this));
 
             }
 
