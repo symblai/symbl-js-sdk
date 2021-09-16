@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable arrow-body-style */
 /**
  * Causes a pause in execution for a specified amount of time
@@ -52,7 +53,7 @@ export default class IEBackoff {
      * @param {function} fn - function to call after sleep
      * @returns the provided function and executes it
      */
-    async run (fn) {
+    async run (fn: Function): Promise<Function> {
 
         if (this.retries === 0) {
 
