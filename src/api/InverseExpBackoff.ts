@@ -2,24 +2,6 @@ import logger from "../logger/Logger";
 
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable arrow-body-style */
-/**
- * Causes a pause in execution for a specified amount of time
- * @param {float} ms - milliseconds to sleep
- * @returns a Promise with a setTimeout of the time provided
- */
-const sleep = (ms) => {
-
-    // eslint-disable-next-line no-promise-executor-return
-    return new Promise((resolve) => {
-
-        setTimeout(
-            resolve,
-            ms
-        );
-
-    });
-
-};
 
 export default class IEBackoff {
 
@@ -51,6 +33,27 @@ export default class IEBackoff {
     }
 
     /**
+     * Causes a pause in execution for a specified amount of time
+     * @param {float} ms - milliseconds to sleep
+     * @returns a Promise with a setTimeout of the time provided
+     */
+    // eslint-disable-next-line class-methods-use-this
+    sleep (ms: number): Promise<void> {
+
+        // eslint-disable-next-line no-promise-executor-return
+        return new Promise((resolve) => {
+
+            setTimeout(
+                resolve,
+                ms
+            );
+
+        });
+
+
+    }
+
+    /**
      * Inverse Exponential backoff for waiting retries of function
      * @param {function} fn - function to call after sleep
      * @returns the provided function and executes it
@@ -70,7 +73,7 @@ export default class IEBackoff {
 
         }
 
-        await sleep(this.nextDelay);
+        await this.sleep(this.nextDelay);
 
         this.retries -= 1;
 
