@@ -170,7 +170,7 @@ This example can be placed at the bottom of the async function's `try` block in 
 
 ```js
 // Subscribe to connection using connectionId that was defined as `connectionId` in previous example.
-sdk.subscribeToConnection(connectionId, (data) => {
+sdk.subscribeToRealtime(connectionId, (data) => {
     const { type } = data;
     if (type === 'message_response') {
 
@@ -209,7 +209,7 @@ sdk.subscribeToConnection(connectionId, (data) => {
     // The raw data response
     console.log(`Response type: ${data.type}. Object: `, data);
 
-}, true); // this final value is an `isStreaming` boolean
+});
 ```
 
 ## Transcribing live audio input through Telephony API
