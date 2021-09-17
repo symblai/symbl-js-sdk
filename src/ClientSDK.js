@@ -362,7 +362,7 @@ export default class ClientSDK {
 
     }
 
-    subscribeToRealtime(connectionId, callback) {
+    subscribeToRealtime (connectionId, callback) {
 
         const sessionApi = new SessionApi(
             {
