@@ -40,6 +40,12 @@ export default class IEBackoff {
     // eslint-disable-next-line class-methods-use-this
     sleep (ms: number): Promise<void> {
 
+        if (!ms) {
+
+            logger.error("Please supply the ms value for sleep");
+
+        }
+
         // eslint-disable-next-line no-promise-executor-return
         return new Promise((resolve) => {
 
