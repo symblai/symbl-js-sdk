@@ -141,6 +141,7 @@ export default class ClientSDK {
                         realtimeClient.sendAudio(data);
 
                     },
+                    "connectionId": realtimeClient.id,
                     conversationId
                 });
 
