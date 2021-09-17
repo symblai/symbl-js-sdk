@@ -1,3 +1,4 @@
+/* eslint-disable no-promise-executor-return */
 import logger from "../logger/Logger";
 
 /* eslint-disable @typescript-eslint/ban-types */
@@ -72,7 +73,7 @@ export default class IEBackoff {
 
         try {
 
-            // eslint-disable-next-line no-promise-executor-return
+            // Pauses further execution of the function until delay has passed
             await new Promise((resolve) => setTimeout(
                 resolve,
                 this.nextDelay
