@@ -24,38 +24,29 @@ export default class IEBackoff {
     // eslint-disable-next-line max-params
     constructor (max = 5000, min = 100, factor = 0.75, maxRetries = 10) {
 
+        if (max <= min) {
+
+            logger.error("Maximum delay must be greater than minimum delay.");
+
+        }
+
+        if (factor >= 1 || factor <= 0) {
+
+            logger.error("Factor must be between 0 and 1.");
+
+        }
+
+        if (maxRetries <= 0) {
+
+            logger.error("Maximum retries must be greater than 0.");
+
+        }
+
         this.max = max;
         this.min = min;
         this.factor = factor;
         this.retries = maxRetries;
         this.nextDelay = max;
-
-    }
-
-    /**
-     * Causes a pause in execution for a specified amount of time
-     * @param {float} ms - milliseconds to sleep
-     * @returns a Promise with a setTimeout of the time provided
-     */
-    // eslint-disable-next-line class-methods-use-this
-    sleep (ms: number): Promise<void> {
-
-        if (!ms) {
-
-            logger.error("Please supply the ms value for sleep");
-
-        }
-
-        // eslint-disable-next-line no-promise-executor-return
-        return new Promise((resolve) => {
-
-            setTimeout(
-                resolve,
-                ms
-            );
-
-        });
-
 
     }
 
@@ -79,23 +70,35 @@ export default class IEBackoff {
 
         }
 
-        await this.sleep(this.nextDelay);
+        try {
 
-        this.retries -= 1;
+            // eslint-disable-next-line no-promise-executor-return
+            await new Promise((resolve) => setTimeout(
+                resolve,
+                this.nextDelay
+            ));
 
-        const newBackoffTime = this.nextDelay * this.factor;
+            this.retries -= 1;
 
-        if (newBackoffTime > this.min) {
+            const newBackoffTime = this.nextDelay * this.factor;
 
-            this.nextDelay = newBackoffTime;
+            if (newBackoffTime > this.min) {
 
-        } else {
+                this.nextDelay = newBackoffTime;
 
-            this.nextDelay = this.min;
+            } else {
+
+                this.nextDelay = this.min;
+
+            }
+
+            return fn();
+
+        } catch (err) {
+
+            logger.error(err);
 
         }
-
-        return fn();
 
     }
 
