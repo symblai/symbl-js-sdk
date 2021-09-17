@@ -347,13 +347,30 @@ export default class ClientSDK {
 
     }
 
-    subscribeToConnection (connectionId, callback, isStreaming = false) {
+    subscribeToConnection (connectionId, callback) {
 
         const sessionApi = new SessionApi(
-            {callback,
+            {
+                callback,
                 "id": connectionId,
                 "basePath": this.basePath,
-                isStreaming},
+                "isStreaming": false
+            },
+            this.oauth2
+        );
+        sessionApi.connect();
+
+    }
+
+    subscribeToRealtime(connectionId, callback) {
+
+        const sessionApi = new SessionApi(
+            {
+                callback,
+                "id": connectionId,
+                "basePath": this.basePath,
+                "isStreaming": true
+            },
             this.oauth2
         );
         sessionApi.connect();
