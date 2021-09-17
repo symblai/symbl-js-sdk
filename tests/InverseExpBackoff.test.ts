@@ -1,21 +1,23 @@
+/* eslint-disable no-new */
 /* eslint-disable max-len */
 import IEBackoff from "../src/api/InverseExpBackoff";
 
 jest.useFakeTimers();
 
 test(
-    "sleep(): Check error on not supplying a ms argument",
+    "constructor(): Check if fails when maximum delay is less than minimum delay",
     () => {
-
-        const backoff = new IEBackoff();
 
         try {
 
-            backoff.sleep();
+            new IEBackoff(
+                100,
+                200
+            );
 
         } catch (err) {
 
-            expect(err).toEqual("Please supply the ms value for sleep");
+            expect(err).toEqual("Maximum delay must be greater than minimum delay.");
 
         }
 
@@ -23,15 +25,60 @@ test(
 );
 
 test(
-    "sleep(): Check if sleep returns a setTimeout() function in promise",
+    "constructor(): Check if fails when factor is not between 0 and 1",
     () => {
 
-        const backoff = new IEBackoff();
+        try {
 
-        expect(backoff.sleep(100)).resolves.toBe(setTimeout);
+            new IEBackoff(
+                200,
+                100,
+                0
+            );
+
+        } catch (err) {
+
+            expect(err).toEqual("Factor must be between 0 and 1.");
+
+        }
+
+        try {
+
+            new IEBackoff(
+                200,
+                100,
+                1
+            );
+
+        } catch (err) {
+
+            expect(err).toEqual("Factor must be between 0 and 1.");
+
+        }
 
     }
+);
 
+test(
+    "constructor(): Check if fails when maxRetries is not greater than 0",
+    () => {
+
+        try {
+
+            new IEBackoff(
+                200,
+                100,
+                0.5,
+                0
+            );
+
+        } catch (err) {
+
+            expect(err).toEqual("Maximum retries must be greater than 0.");
+
+        }
+
+    }
 );
 
 test(
@@ -46,7 +93,7 @@ test(
 
         } catch (err) {
 
-            expect(err).toEqual("Please provide a callback function to be run after the inverse exponential backoff delay");
+            expect(err).toEqual("Please provide a callback function to be run after the inverse exponential backoff delay.");
 
         }
 
@@ -97,17 +144,114 @@ test(
 );
 
 test(
-    "run(): Check if delay is correct amount of time",
+    "run(): Check if fail when out of retries",
     async () => {
 
-        const backoff = new IEBackoff(1000);
+        const backoff = new IEBackoff(
+            // Maximum/initial delay
+            5000,
+            // Minimum delay
+            100,
+            // Factor
+            0.5,
+            // Max Retries
+            1
+        );
 
         const retry = jest.fn();
 
-        backoff.run(retry);
-        jest.advanceTimersByTime(1000);
-        await Promise.resolve();
-        expect(retry).toHaveBeenCalledTimes(1);
+        try {
+
+            backoff.run(retry);
+            jest.advanceTimersByTime(5000);
+            await Promise.resolve();
+
+            backoff.run(retry);
+
+        } catch (err) {
+
+            expect(err).toEqual("No retries remaining.");
+
+        }
+
+    }
+);
+
+test(
+    "run(): Check if delay is correct amount of time",
+    async () => {
+
+        const backoff = new IEBackoff(
+            // Maximum/initial delay
+            5000,
+            // Minimum delay
+            100,
+            // Factor
+            0.5,
+            // Max Retries
+            1
+        );
+
+        const retry = jest.fn();
+
+        try {
+
+            backoff.run(retry);
+            jest.advanceTimersByTime(5000);
+            await Promise.resolve();
+            expect(retry).toHaveBeenCalledTimes(1);
+
+        } catch (err) {
+
+            throw new Error(err);
+
+        }
+
+    }
+);
+
+test(
+    "run(): Check if delay is correct amount of time",
+    async () => {
+
+        const backoff = new IEBackoff(
+            // Maximum/initial delay
+            5000,
+            // Minimum delay
+            100,
+            // Factor
+            0.5,
+            // Max Retries
+            4
+        );
+
+        const retry = jest.fn();
+
+        try {
+
+            backoff.run(retry);
+            jest.advanceTimersByTime(5000);
+            await Promise.resolve();
+
+            backoff.run(retry);
+            jest.advanceTimersByTime(5000 * 0.5);
+            await Promise.resolve();
+
+            backoff.run(retry);
+            jest.advanceTimersByTime(5000 * 0.5 * 0.5);
+            await Promise.resolve();
+
+            backoff.run(retry);
+            jest.advanceTimersByTime(5000 * 0.5 * 0.5 * 0.5);
+            await Promise.resolve();
+
+            expect(retry).toHaveBeenCalledTimes(4);
+
+        } catch (err) {
+
+            throw new Error(err);
+
+        }
 
     }
 );

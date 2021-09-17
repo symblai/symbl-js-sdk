@@ -60,13 +60,13 @@ export default class IEBackoff {
         if (!fn || typeof fn !== "function") {
 
             // eslint-disable-next-line max-len
-            logger.error("Please provide a callback function to be run after the inverse exponential backoff delay");
+            logger.error("Please provide a callback function to be run after the inverse exponential backoff delay.");
 
         }
 
         if (this.retries === 0) {
 
-            logger.error("No more retries left");
+            logger.error("No retries remaining.");
 
         }
 
