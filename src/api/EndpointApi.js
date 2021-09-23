@@ -157,7 +157,6 @@ export default class EndpointApi {
         }
 
         const endpointConnectRequest = EndpointConnectRequest.constructFromObject(request);
-
         return new Promise((resolve, reject) => {
             try {
                 this.connectionToEndpointApi.connectToEndpoint(endpointConnectRequest, (error, data, response) => {

@@ -31,18 +31,14 @@ export default class ClientSDK {
 
         }
 
-        const {appId, appSecret, logLevel, tlsAuth, basePath} = await options;
+        const {appId, appSecret, logLevel, tlsAuth, basePath, accessToken} = await options;
 
-        if (!appId) {
-
-            throw new Error("appId is required.");
-
+        if (!appId && !accessToken) {
+            throw new Error('appId is required.');
         }
 
-        if (!appSecret) {
-
-            throw new Error("appSecret is required.");
-
+        if (!appSecret && !accessToken) {
+            throw new Error('appSecret is required.');
         }
 
         if (logLevel) {
@@ -59,19 +55,11 @@ export default class ClientSDK {
 
         this.basePath = basePath;
 
-        logger.trace(
-            "Initializing SDK with options: ",
-            options
-        );
+        logger.trace('Initializing SDK with options: ', options);
 
         return new Promise((resolve, reject) => {
-
-            this.oauth2.init(
-                options.appId,
-                options.appSecret
-            ).
-                then(() => {
-
+            this.oauth2.init(options.appId, options.appSecret, options.accessToken)
+                .then(() => {
                     const apiClient = new ApiClient();
                     if (basePath || basePath && basePath !== this.oauth2.apiClient.basePath) {
 
@@ -86,12 +74,8 @@ export default class ClientSDK {
                         apiClient
                     );
                     resolve();
-
-                }).
-                catch((reason) => reject(reason));
-
+                }).catch(reason => reject(reason));
         });
-
     }
 
     async startRealtimeRequest (options = {}) {
@@ -104,10 +88,7 @@ export default class ClientSDK {
 
         options.basePath = options.basePath || this.basePath;
 
-        const realtimeClient = new RealtimeApi(
-            options,
-            this.oauth2
-        );
+        const realtimeClient = new RealtimeApi(options, this.oauth2);
 
         const startRequest = (resolve, reject) => {
 
