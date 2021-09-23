@@ -246,10 +246,11 @@ export default class RealtimeApi {
             trackers,
             customVocabulary,
             disconnectOnStopRequest,
-            disconnectOnStopRequestTimeout
+            disconnectOnStopRequestTimeout,
+            noConnectionTimeout
         } = this.options;
         if (config) {
-            if !(config.speechRecognition) {
+            if (!config.speechRecognition) {
                 const speechRecognition = {};
                 if (!config.sampleRateHertz) {
 
@@ -301,6 +302,9 @@ export default class RealtimeApi {
         if (disconnectOnStopRequest !== undefined && disconnectOnStopRequestTimeout !== undefined) {
             configObj.disconnectOnStopRequest = disconnectOnStopRequest;
             configObj.disconnectOnStopRequestTimeout = disconnectOnStopRequestTimeout;
+        }
+        if (noConnectionTimeout !== undefined) {
+            configObj.noConnectionTimeout = noConnectionTimeout;
         }
         this.webSocket.send(JSON.stringify(configObj));
 
