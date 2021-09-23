@@ -135,3 +135,10 @@ interface SymblRealtimeConnection {
     sendAudio: (audioData: unknown) => void;
     stop: () => void;
 }
+
+interface SessionOptions {
+    callback: unknown;
+    id: string;
+    basePath?: string;
+    isStreaming: boolean;
+}
