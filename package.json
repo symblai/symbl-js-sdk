@@ -44,6 +44,7 @@
   },
   "scripts": {
     "test": "jest --silent tests",
+    "test-verbose": "jest --verbose tests",
     "watch": "tsc-watch --onSuccess \"npm run build\"",
     "build": "tsc && webpack --config webpack/webpack.config.js --mode production"
   },
