@@ -220,7 +220,9 @@ export default class RealtimeApi {
             this.requestStoppedResolve = null;
 
         }
-        this.webSocket.disconnect();
+        if (this.disconnectOnStopRequest !== false) {
+            this.webSocket.disconnect();
+        }
 
     }
 
