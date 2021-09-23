@@ -242,42 +242,45 @@ export default class RealtimeApi {
             config,
             speaker,
             trackers,
-            customVocabulary
+            customVocabulary,
+            disconnectOnStopRequest,
+            disconnectOnStopRequestTimeout
         } = this.options;
         if (config) {
+            if !(config.speechRecognition) {
+                const speechRecognition = {};
+                if (!config.sampleRateHertz) {
 
-            const speechRecognition = {};
-            if (!config.sampleRateHertz) {
+                    throw new Error("sampleRateHertz must be provided.");
 
-                throw new Error("sampleRateHertz must be provided.");
+                } else if (typeof config.sampleRateHertz !== "number") {
 
-            } else if (typeof config.sampleRateHertz !== "number") {
-
-                throw new Error("sampleRateHertz must be a valid number");
-
-            }
-            Object.keys(config).forEach((key) => {
-
-                switch (key) {
-
-                case "engine":
-                case "encoding":
-                case "sampleRateHertz":
-                case "interimResults":
-                    speechRecognition[key] = config[key];
-                    delete config[key];
-                    break;
-                default:
-                    break;
+                    throw new Error("sampleRateHertz must be a valid number");
 
                 }
+                Object.keys(config).forEach((key) => {
 
-            });
+                    switch (key) {
 
-            if (Object.keys(speechRecognition).length > 0) {
+                    case "engine":
+                    case "encoding":
+                    case "sampleRateHertz":
+                    case "interimResults":
+                        speechRecognition[key] = config[key];
+                        delete config[key];
+                        break;
+                    default:
+                        break;
 
-                config.speechRecognition = speechRecognition;
+                    }
 
+                });
+
+                if (Object.keys(speechRecognition).length > 0) {
+
+                    config.speechRecognition = speechRecognition;
+
+                }
             }
 
         }
@@ -285,14 +288,19 @@ export default class RealtimeApi {
         this.requestStartedResolve = resolve;
         this.onRequestError = reject;
         this.requestStarted = true;
-        this.webSocket.send(JSON.stringify({
+        let configObj = {
             "type": "start_request",
             "insightTypes": insightTypes || [],
             config,
             speaker,
             trackers,
             customVocabulary
-        }));
+        };
+        if (disconnectOnStopRequest !== undefined && disconnectOnStopRequestTimeout !== undefined) {
+            configObj.disconnectOnStopRequest = disconnectOnStopRequest;
+            configObj.disconnectOnStopRequestTimeout = disconnectOnStopRequestTimeout;
+        }
+        this.webSocket.send(JSON.stringify(configObj));
 
     }
 
