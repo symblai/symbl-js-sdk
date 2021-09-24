@@ -188,15 +188,17 @@ export default class RealtimeApi {
     connect () {
 
         logger.debug("WebSocket Connecting.");
-        this.webSocketStatus = webSocketConnectionStatus.connecting;
-        this.webSocket = new WebSocket({
-            "accessToken": this.oauth2.activeToken,
-            "onClose": this.onCloseWebSocket,
-            "onConnect": this.onConnectWebSocket,
-            "onError": this.onErrorWebSocket,
-            "onMessage": this.onMessageWebSocket,
-            "url": this.webSocketUrl
-        });
+        if (this.webSocketStatus !== webSocketConnectionStatus.connected) {
+            this.webSocketStatus = webSocketConnectionStatus.connecting;
+            this.webSocket = new WebSocket({
+                "accessToken": this.oauth2.activeToken,
+                "onClose": this.onCloseWebSocket,
+                "onConnect": this.onConnectWebSocket,
+                "onError": this.onErrorWebSocket,
+                "onMessage": this.onMessageWebSocket,
+                "url": this.webSocketUrl
+            });
+        }
 
     }
 
@@ -315,7 +317,7 @@ export default class RealtimeApi {
         return new Promise((resolve, reject) => {
 
             if (this.webSocketStatus === webSocketConnectionStatus.connected) {
-
+                
                 this.sendStart(
                     resolve,
                     reject
@@ -375,6 +377,9 @@ export default class RealtimeApi {
                 this.webSocket.send(JSON.stringify({
                     "type": "stop_request"
                 }));
+                if (this.options.disconnectOnStopRequest === false) {
+                    this.requestStarted = false;
+                }
 
             } else {
 

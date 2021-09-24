@@ -88,18 +88,20 @@ export default class ClientSDK {
 
         options.basePath = options.basePath || this.basePath;
 
-        const realtimeClient = new RealtimeApi(options, this.oauth2);
+        if (!this.realtimeClient) {
+            this.realtimeClient = new RealtimeApi(options, this.oauth2);
+        }
 
         const startRequest = (resolve, reject) => {
 
             logger.info("Starting request.");
-            realtimeClient.startRequest().then((conversationId) => {
+            this.realtimeClient.startRequest().then((conversationId) => {
 
                 logger.info(`Realtime request started: ${conversationId}`);
                 resolve({
                     "stop": () => new Promise((resolve, reject) => {
 
-                        realtimeClient.stopRequest().then((conversationData) => {
+                        this.realtimeClient.stopRequest().then((conversationData) => {
 
                             logger.info("Realtime request stopped.");
                             if (conversationData) {
@@ -119,10 +121,10 @@ export default class ClientSDK {
                     }),
                     "sendAudio": (data) => {
 
-                        realtimeClient.sendAudio(data);
+                        this.realtimeClient.sendAudio(data);
 
                     },
-                    "connectionId": realtimeClient.id,
+                    "connectionId": this.realtimeClient.id,
                     conversationId
                 });
 
@@ -150,7 +152,7 @@ export default class ClientSDK {
                     );
                     if (this.oauth2 && this.oauth2.activeToken) {
 
-                        realtimeClient.connect();
+                        this.realtimeClient.connect();
                         startRequest(
                             resolve,
                             reject
