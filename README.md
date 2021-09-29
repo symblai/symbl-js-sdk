@@ -2,13 +2,19 @@
 
 The Symbl Javascript SDK provides convenient access to the Symbl API from applications written in the Javascript language via Node.js or directly in the browser. It includes a pre-defined set of classes for a simple and clear utilization of APIs.
 
+We are working diligently to support every Symbl API. Currently we support the following APIs:
+
+* [Streaming API](https://docs.symbl.ai/docs/streamingapi/introduction)
+* [Telephony API](https://docs.symbl.ai/docs/telephony/introduction)
+* [Subscribe API](https://docs.symbl.ai/docs/subscribe-api)
+
 ## Documentation
 
 See the [API docs](https://docs.symbl.ai/docs/).
 
 ### Requirements
 
-- Node.js 14+
+- Node.js 10+
 
 ## Installation
 
@@ -28,47 +34,20 @@ You can then install the library directly on your machine using:
 npm install @symblai/symbl-js
 ```
 
-<!-- If you use the npm package, the SDK import will not require a relative path.
-
-```js
-const { sdk } = require('@symblai/symbl-js');
-``` -->
-
 
 ## Configuration
 
 The SDK needs to be initialized with your account's credentials (appId & appSecret) which is
 available in your [Symbl Platform][api-keys].
 
-You can either provide the credentials by declaring constants or pass them directly when creating the SDK instance.
+You can either provide the credentials by declaring constants before SDK initilization or pass them directly when creating the SDK instance.
+
+Example:
 
 ```js
 const APP_ID='<app_id>'
 const APP_SECRET='<app_secret>'
-```
-<!-- Example for 'config.js' file
 
-```js
-export = {
-  'APP_ID':'<app_id>',
-  'APP_SECRET':'<app_secret>'
-}
-```
-
-Importing the 'config.js' file
-
-```js
-// If using CommonJS style
-const config = require('/path/to/config')
-
-// If using ES6 style
-import { config } from '/path/to/config'
-``` -->
-
-<!-- ## Initializing SDK
-
-To initialize with default API endpoints.
-```js
 sdk.init({
     appId: APP_ID,
     appSecret: APP_SECRET
@@ -76,15 +55,6 @@ sdk.init({
     .catch(err => console.error('Error in initialization.', err));
 ```
 
-If you have custom API domain, use the `basePath` option in `init()`.
-```js
-sdk.init({
-    appId: APP_ID,
-    appSecret: APP_SECRET,
-    basePath: 'https://yourcustomdomain.rammer.ai'
-}).then(() => console.log('SDK Initialized.'))
-    .catch(err => console.error('Error in initialization.', err)); 
-```-->
 
 ## Transcribing live audio input through the microphone
 
@@ -110,6 +80,9 @@ const micInstance = mic({
   exitOnSilence: 6,
 });
 
+// Need unique Id
+const connectionId = uuid()
+
 (async () => {
   try {
     // Initialize the SDK
@@ -119,12 +92,9 @@ const micInstance = mic({
       basePath: 'https://api.symbl.ai',
     })
 
-    // Need unique Id
-    const id = uuid()
-
     // Start Real-time Request (Uses Real-time WebSocket API behind the scenes)
     const connection = await sdk.startRealtimeRequest({
-      id,
+      id: connectionId,
       config: {
         meetingTitle: 'My Test Meeting',
         confidenceThreshold: 0.7,
@@ -148,6 +118,7 @@ const micInstance = mic({
       }
     });
 
+    // Logs conversationId which is used to access the conversation afterwards
     console.log('Successfully connected. Conversation ID: ', connection.conversationId);
 
     const micInputStream = micInstance.getAudioStream()
@@ -190,6 +161,56 @@ const micInstance = mic({
 ```
 
 If you'd like to see a more in-depth examples for the Streaming API, please take a look at the extended Streaming examples [here][Streaming-Examples].
+
+## Subscribe to Streaming API connection
+
+Using the Subscribe API, a read-only connection can be opened that can access the data that does not send audio or count towards minutes used on account. You'll need the `connectionId` from an existing live connection as in the previous live transcription example. If you are not handling the realtime connection and subscribe api connection in the same file, you can access an existing connection's connectionId with `connection.connectionId`.
+
+This example can be placed at the bottom of the async function's `try` block in the previous example.
+
+```js
+// Subscribe to connection using connectionId that was defined as `connectionId` in previous example.
+sdk.subscribeToRealtime(connectionId, (data) => {
+    const { type } = data;
+    if (type === 'message_response') {
+
+        const { messages } = data;
+
+        // You get any messages here
+        messages.forEach(message => {
+          console.log(`Message: ${message.payload.content}`)
+        });
+
+    } else if (type === 'insight_response') {
+
+        const { insights } = data;
+
+        // You get any insights here
+        insights.forEach(insight => {
+            console.log(`Insight: ${insight.type} - ${insight.text}`);
+        });
+
+    } else if (type === 'topic_response') {
+        const { topics } = data;
+        
+        // You get any topic phrases here
+        topics.forEach(topic => {
+            console.log(`Topic detected: ${topic.phrases}`)
+        });
+
+    } else if (type === 'message' && data.message.hasOwnProperty('punctuated')) {
+
+        const { transcript } = data.message.punctuated;
+
+        // Live punctuated full transcript as opposed to broken into messages
+        console.log(`Live transcript: ${transcript}`)
+    }
+
+    // The raw data response
+    console.log(`Response type: ${data.type}. Object: `, data);
+
+});
+```
 
 ## Transcribing live audio input through Telephony API
 

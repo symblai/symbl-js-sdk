@@ -1,6 +1,6 @@
 {
   "name": "@symblai/symbl-js",
-  "version": "1.1.3c",
+  "version": "1.1.5-alpha.8",
   "description": "Javascript SDK for Symbl.ai's Language Insights API Platform",
   "main": "build/app.bundle.js",
   "dependencies": {
@@ -43,7 +43,8 @@
     "webpack-node-externals": "^1.7.2"
   },
   "scripts": {
-    "test": "jest --silent src",
+    "test": "jest --silent tests",
+    "test-verbose": "jest --verbose tests",
     "watch": "tsc-watch --onSuccess \"npm run build\"",
     "build": "tsc && webpack --config webpack/webpack.config.js --mode production"
   },

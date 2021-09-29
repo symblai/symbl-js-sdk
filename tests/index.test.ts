@@ -1,4 +1,4 @@
-import {sdk, SDK, SpeakerEvent} from "./index"
+import {sdk, SDK, SpeakerEvent} from "../src/index"
 
 test('sdk Exists', () => {
   expect(typeof sdk !== "undefined");
