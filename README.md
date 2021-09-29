@@ -246,8 +246,6 @@ const PHONE_NUMBER = '<your phone number>';
                 })
             } else if (type === 'insight_response') {
                 const { insights } = data;
-                
-               symbl });
             }
         });
 
