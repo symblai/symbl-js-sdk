@@ -1,5 +1,5 @@
 import isNode from "detect-node";
-const LogLevel = require("loglevel");
+import LogLevel from "loglevel";
 
 declare let window: any; // eslint-disable-line
 
