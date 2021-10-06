@@ -60,6 +60,26 @@ sdk.init({
 
 As a simple test of the Streaming API you can simply setup a live microphone and push the audio stream using the `mic` npm package and use the `uuid` package to create a unique meeting ID. 
 
+In order to use the `mic` package, you'll need either Sox for Mac/Windows or Alsa tools for Linux installed on your computer.
+
+To check if Sox is installed on Windows or Mac, simply open a console/terminal and type in the command `sox --version`
+
+To install Sox on Windows or Mac download their latest release [here](https://sourceforge.net/projects/sox/files/sox/14.4.2/) and run the installer.
+
+If you have Homebrew on your Mac install it with `brew install sox`
+
+To check if you have Alsa tools installed in Linux and are able to use it, run `arecord temp.wav` in your terminal.
+
+If it is not installed you can use the following commands:
+
+Debian/Ubuntu
+`sudo apt-get update`
+`sudo apt-get install alsa-base alsa-utils`
+
+Arch
+`sudo pacman -Syu`
+`sudo pacman -S alsa-tools`
+
 Initialize the SDK and connect via the built-in websocket connector. This will output the live transcription to the console.
 
 ```js
