@@ -72,13 +72,9 @@ To check if you have Alsa tools installed in Linux and are able to use it, run `
 
 If it is not installed you can use the following commands:
 
-Debian/Ubuntu
-`sudo apt-get update`
-`sudo apt-get install alsa-base alsa-utils`
+Debian/Ubuntu: `sudo apt-get update && sudo apt-get install alsa-base alsa-utils`
 
-Arch
-`sudo pacman -Syu`
-`sudo pacman -S alsa-tools`
+Arch: `sudo pacman -Syu && sudo pacman -S alsa-tools`
 
 Initialize the SDK and connect via the built-in websocket connector. This will output the live transcription to the console.
 
