@@ -10,7 +10,7 @@ const uuid = require('uuid').v4
 // For demo purposes, we're using mic to simply get audio from the microphone and pass it on to the WebSocket connection
 const mic = require('mic')
 
-const sampleRateHertz = 16000
+const sampleRateHertz = 16000;
 
 const micInstance = mic({
   rate: sampleRateHertz,
@@ -45,7 +45,7 @@ const micInstance = mic({
       speaker: {
         // Optional, if not specified, will simply not send an email in the end.
         userId: EMAIL, // Update with valid email
-        name: FULL_NAME 
+        name: FULL_NAME
       },
       handlers: {
         // This will return live speech-to-text transcription of the call.
@@ -57,17 +57,17 @@ const micInstance = mic({
           }
           // console.log('onSpeechDetected ', JSON.stringify(data, null, 2));
         },
-        
+
         // When processed messages are available, this callback will be called.
         onMessageResponse: (data) => {
           console.log('onMessageResponse', JSON.stringify(data, null, 2))
         },
-        
+
         // When Symbl detects an insight, this callback will be called.
         onInsightResponse: (data) => {
           console.log('onInsightResponse', JSON.stringify(data, null, 2))
         },
-        
+
         // When Symbl detects a topic, this callback will be called.
         onTopicResponse: (data) => {
           console.log('onTopicResponse', JSON.stringify(data, null, 2))
@@ -77,7 +77,7 @@ const micInstance = mic({
     console.log('Successfully connected. Conversation ID: ', connection.conversationId);
 
     const micInputStream = micInstance.getAudioStream()
-    
+
     // Raw audio stream
     micInputStream.on('data', (data) => {
       // Push audio from Microphone to websocket connection

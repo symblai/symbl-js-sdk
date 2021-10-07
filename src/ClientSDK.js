@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable sort-keys */
 /* eslint-disable max-lines */
+/* eslint-disable padded-blocks */
 import EndpointApi from "./api/EndpointApi";
 import RealtimeApi from "./api/RealtimeApi";
 import SessionApi from "./api/SessionApi";
@@ -11,6 +12,7 @@ import logger from "./logger/Logger";
 import isNode from "detect-node";
 import {ApiClient} from "@symblai/api-client";
 import EventApi from "./event/EventApi";
+import {v4} from "uuid";
 
 export default class ClientSDK {
 
@@ -78,63 +80,158 @@ export default class ClientSDK {
         });
     }
 
-    async startRealtimeRequest (options = {}) {
-
+    createStream(options = {}) {
         if (!this.oauth2) {
-
             throw new Error("SDK is not initialized or failed during initialization.");
+        }
 
+        options.basePath = options.basePath || this.basePath;
+        if (!options.id) {
+            logger.warn(`No 'id' detected. Generating a UUID. Reference 'connectionId' property of the resolved object.`);
+            options.id = v4();
+        }
+
+        let realtimeClient = this.cache.get(options.id);
+        if (!realtimeClient) {
+            realtimeClient = new RealtimeApi(options, this.oauth2, false, {
+                _onClose: () => {
+                    this.cache.remove(options.id);
+                }
+            });
+            this.cache.set(options.id, realtimeClient);
+        }
+
+        return new Promise((resolve, reject) => {
+            let retryCount = 0;
+
+            const retry = () => {
+                if (retryCount < 4) {
+                    logger.info(
+                        "Retry attempt: ",
+                        retryCount,
+                        this.oauth2
+                    );
+
+                    if (this.oauth2 && this.oauth2.activeToken) {
+                        realtimeClient.connect(async (err) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve({
+                                    stop: async () => {
+                                        try {
+                                            const conversationData = await realtimeClient.stopRequest();
+                                            if (conversationData) {
+                                                logger.info("Realtime request stopped.");
+                                                delete conversationData.type;
+
+                                                return conversationData;
+                                            }
+
+                                            return {};
+                                        } catch (e) {
+                                            throw e;
+                                        }
+                                    },
+
+                                    start: (options) => {
+                                        if (options && typeof options === "object") {
+                                            realtimeClient.options = {
+                                                ...(this.realtimeClient.options || {}),
+                                                ...options
+                                            };
+                                        }
+
+                                        return new Promise((resolveS, rejectS) => {
+                                            realtimeClient.sendStart(resolveS, rejectS);
+                                        });
+                                    },
+
+                                    sendAudio: (data) => {
+                                        realtimeClient.sendAudio(data);
+                                    },
+
+                                    close: () => {
+                                        realtimeClient.webSocket.disconnect();
+                                        this.cache.remove(options.id);
+                                    },
+
+                                    connectionId: realtimeClient.id,
+                                    conversationId: realtimeClient.conversationId,
+                                });
+                            }
+                        });
+                    } else {
+                        logger.info("Active Token not found.");
+                        retryCount++;
+                        setTimeout(
+                            retry.bind(this),
+                            1000 * retryCount
+                        );
+                    }
+                } else {
+                    reject({"message": "Could not connect to real-time api after 4 retries."});
+                }
+            };
+
+            setTimeout(
+                retry.bind(this),
+                0
+            );
+        });
+    }
+
+    async startRealtimeRequest (options = {}) {
+        if (!this.oauth2) {
+            throw new Error("SDK is not initialized or failed during initialization.");
         }
 
         options.basePath = options.basePath || this.basePath;
 
-        if (!this.realtimeClient) {
-            this.realtimeClient = new RealtimeApi(options, this.oauth2);
+        let realtimeClient = this.cache.get(options.id);
+        if (!realtimeClient) {
+            realtimeClient = new RealtimeApi(options, this.oauth2, true, {
+                _onClose: () => {
+                    this.cache.remove(options.id);
+                }
+            });
+            this.cache.set(options.id, realtimeClient);
         }
 
         const startRequest = (resolve, reject) => {
 
             logger.info("Starting request.");
-            this.realtimeClient.startRequest().then((conversationId) => {
+            realtimeClient.startRequest().then((conversationId) => {
 
                 logger.info(`Realtime request started: ${conversationId}`);
                 resolve({
                     "stop": () => new Promise((resolve, reject) => {
 
-                        this.realtimeClient.stopRequest().then((conversationData) => {
+                        realtimeClient.stopRequest().then((conversationData) => {
 
                             logger.info("Realtime request stopped.");
                             if (conversationData) {
-
                                 delete conversationData.type;
-
                             }
+
+                            this.cache.remove(options.id);
                             resolve(conversationData);
-
-                        }).
-                            catch((err) => {
-
-                                reject(err);
-
-                            });
+                        }).catch((err) => {
+                            this.cache.remove(options.id);
+                            reject(err);
+                        });
 
                     }),
                     "sendAudio": (data) => {
-
-                        this.realtimeClient.sendAudio(data);
-
+                        realtimeClient.sendAudio(data);
                     },
-                    "connectionId": this.realtimeClient.id,
+                    "connectionId": realtimeClient.id,
                     conversationId
                 });
 
-            }).
-                catch((err) => {
-
-                    reject(err);
-
-                });
-
+            }).catch((err) => {
+                reject(err);
+            });
         };
 
         return new Promise((resolve, reject) => {
@@ -151,8 +248,7 @@ export default class ClientSDK {
                         this.oauth2
                     );
                     if (this.oauth2 && this.oauth2.activeToken) {
-
-                        this.realtimeClient.connect();
+                        realtimeClient.connect();
                         startRequest(
                             resolve,
                             reject
