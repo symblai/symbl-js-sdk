@@ -185,7 +185,7 @@ If you'd like to see a more in-depth examples for the Streaming API, please take
 
 Using the Subscribe API, a read-only connection can be opened that can access the data that does not send audio or count towards minutes used on account. You'll need the `connectionId` from an existing live connection as in the previous live transcription example. If you are not handling the realtime connection and subscribe api connection in the same file, you can access an existing connection's connectionId with `connection.connectionId`.
 
-This example can be run in a separate tab while the previous example is running.
+This example can be run in a separate terminal while the previous example is running.
 
 ```js
 const { sdk } = require('@symblai/symbl-js');
