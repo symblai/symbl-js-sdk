@@ -254,6 +254,8 @@ const connectionId = new Buffer(APP_ID).toString('base64'); // for testing
 
 ## Transcribing live audio input through Telephony API
 
+Symbl’s Telephony API allows you to connect to any conference call system using PSTN or SIP networks. This allows transcription and insights while using systems like Zoom, Twilio, Chime, or the like with minimal setup.
+
 As a simple test of the Telephony API you can call a phone number and see a live transcription of your phone call in the console.
 
 ```js
