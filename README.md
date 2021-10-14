@@ -45,8 +45,10 @@ You can either provide the credentials by declaring constants before SDK initili
 Example:
 
 ```js
-const APP_ID='<app_id>'
-const APP_SECRET='<app_secret>'
+const { sdk } = require('@symblai/symbl-js');
+
+const APP_ID = '<your App ID>';
+const APP_SECRET = '<your App Secret>';
 
 sdk.init({
     appId: APP_ID,
