@@ -170,7 +170,7 @@ const connectionId = new Buffer(APP_ID).toString('base64'); // for testing
       } catch (e) {
         console.error('Error while stopping the connection.', e)
       }
-    }, 60 * 1000) // Stop connection after 1 minute i.e. 60 secs
+    }, 120 * 1000) // Stop connection after 2 minute i.e. 120 secs
   } catch (err) {
     console.error('Error: ', err)
   }
@@ -183,7 +183,7 @@ If you'd like to see a more in-depth examples for the Streaming API, please take
 
 Using the Subscribe API, a read-only connection can be opened that can access the data that does not send audio or count towards minutes used on account. You'll need the `connectionId` from an existing live connection as in the previous live transcription example. If you are not handling the realtime connection and subscribe api connection in the same file, you can access an existing connection's connectionId with `connection.connectionId`.
 
-This example can be placed at the bottom of the async function's `try` block in the previous example.
+This example can be run in a separate tab while the previous example is running.
 
 ```js
 const { sdk } = require('@symblai/symbl-js');
