@@ -137,7 +137,7 @@ export default class ClientSDK {
                                     start: (options) => {
                                         if (options && typeof options === "object") {
                                             realtimeClient.options = {
-                                                ...(this.realtimeClient.options || {}),
+                                                ...(realtimeClient.options || {}),
                                                 ...options
                                             };
                                         }
