@@ -6,6 +6,10 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 In the project directory, you can run:
 
+### `.env`
+
+Configure your credentials (appId/appSecret) as the `REACT_APP_APP_ID` and `REACT_APP_APP_SECRET` respectively.
+
 ### `npm start`
 
 Runs the app in the development mode.\
