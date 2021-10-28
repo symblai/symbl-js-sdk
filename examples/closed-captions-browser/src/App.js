@@ -268,7 +268,6 @@ function App() {
             setRenderViaSubscription(event.target.checked);
 
             if (!subscribed) {
-                console.log(`Subscribing...`);
                 await sdk.subscribeToStream(connectionId, (data) => {
 //                    console.log(`Subscribe API Data`, data);
                     const { type } = data;
@@ -314,8 +313,6 @@ function App() {
                         if (renderViaSubscription) setCaption(transcript);
                     }
                 });
-
-                console.log(`Subscribed`);
 
                 setSubscribing(false);
                 setSubscribed(true);
@@ -432,7 +429,7 @@ function App() {
                                     handleSubscribeClick(e);
                                 }}
                                 disabled={connecting || !started || subscribing}
-                                label="Subscribed"
+                                label={renderViaSubscription ? "Subscribed" : "Not Subscribed"}
                             />
                         </FormGroup>
                     </Stack>
