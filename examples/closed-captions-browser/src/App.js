@@ -339,7 +339,8 @@ function App() {
                         onSpeechDetected: (data) => {
                             if (data) {
                                 const { punctuated } = data;
-                                setCaption(punctuated.transcript);
+                                if (!renderViaSubscription)
+                                    setCaption(punctuated.transcript);
                             }
                         },
 
