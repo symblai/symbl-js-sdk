@@ -328,7 +328,7 @@ export default class RealtimeApi {
                     this.webSocketStatus
                 );
                 const retry = () => {
-
+                    let continueRetry = true;
                     if (!this.requestStarted) {
 
                         logger.info(
@@ -344,8 +344,9 @@ export default class RealtimeApi {
                             );
 
                         } else {
-
-                            this.backoff.run(retry.bind(this));
+                            if (continueRetry !== false) {
+                                continueRetry = this.backoff.run(retry.bind(this));
+                            }
 
                         }
 
