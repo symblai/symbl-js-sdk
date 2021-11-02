@@ -52,7 +52,6 @@ export default class OAuth2 {
         if (this.automaticallyRefreshToken) {
             this.refreshOn = new Date(this.expiresOn.getTime() - this.refreshTimeBeforeExpiry*1000);
             logger.trace('Token will be refreshed on: ', this.refreshOn);
-            // const refreshDuration = moment.duration(this.refreshOn.diff(this.updatedOn)).asMilliseconds(); // In milliseconds
             const refreshDuration = (this.expiresIn - this.refreshTimeBeforeExpiry) * 1000;
             logger.trace('Refresh is scheduled in millis: ', refreshDuration);
             setTimeout(() => {

@@ -45,8 +45,10 @@ You can either provide the credentials by declaring constants before SDK initili
 Example:
 
 ```js
-const APP_ID='<app_id>'
-const APP_SECRET='<app_secret>'
+const { sdk } = require('@symblai/symbl-js');
+
+const APP_ID = '<your App ID>';
+const APP_SECRET = '<your App Secret>';
 
 sdk.init({
     appId: APP_ID,
@@ -59,6 +61,22 @@ sdk.init({
 ## Transcribing live audio input through the microphone
 
 As a simple test of the Streaming API you can simply setup a live microphone and push the audio stream using the `mic` npm package and use the `uuid` package to create a unique meeting ID. 
+
+In order to use the `mic` package, you'll need either Sox for Mac/Windows or Alsa tools for Linux installed on your computer.
+
+To check if Sox is installed on Windows or Mac, simply open a console/terminal and type in the command `sox --version`
+
+To install Sox on Windows or Mac download their latest release [here](https://sourceforge.net/projects/sox/files/sox/14.4.2/) and run the installer.
+
+If you have Homebrew on your Mac install it with `brew install sox`
+
+To check if you have Alsa tools installed in Linux and are able to use it, run `arecord temp.wav` in your terminal.
+
+If it is not installed you can use the following commands:
+
+Debian/Ubuntu: `sudo apt-get update && sudo apt-get install alsa-base alsa-utils`
+
+Arch: `sudo pacman -Syu && sudo pacman -S alsa-tools`
 
 Initialize the SDK and connect via the built-in websocket connector. This will output the live transcription to the console.
 
@@ -80,8 +98,9 @@ const micInstance = mic({
   exitOnSilence: 6,
 });
 
-// Need unique Id
-const connectionId = uuid()
+// Need unique ID and best to use uuid in production
+// const connectionId = uuid()
+const connectionId = new Buffer(APP_ID).toString('base64'); // for testing
 
 (async () => {
   try {
@@ -153,9 +172,9 @@ const connectionId = uuid()
       } catch (e) {
         console.error('Error while stopping the connection.', e)
       }
-    }, 60 * 1000) // Stop connection after 1 minute i.e. 60 secs
-  } catch (e) {
-    console.error('Error: ', e)
+    }, 120 * 1000) // Stop connection after 2 minute i.e. 120 secs
+  } catch (err) {
+    console.error('Error: ', err)
   }
 })();
 ```
@@ -166,53 +185,76 @@ If you'd like to see a more in-depth examples for the Streaming API, please take
 
 Using the Subscribe API, a read-only connection can be opened that can access the data that does not send audio or count towards minutes used on account. You'll need the `connectionId` from an existing live connection as in the previous live transcription example. If you are not handling the realtime connection and subscribe api connection in the same file, you can access an existing connection's connectionId with `connection.connectionId`.
 
-This example can be placed at the bottom of the async function's `try` block in the previous example.
+This example can be run in a separate terminal while the previous example is running.
 
 ```js
+const { sdk } = require('@symblai/symbl-js');
+
+const APP_ID = '<your App ID>';
+const APP_SECRET = '<your App Secret>';
+
 // Subscribe to connection using connectionId that was defined as `connectionId` in previous example.
-sdk.subscribeToRealtime(connectionId, (data) => {
-    const { type } = data;
-    if (type === 'message_response') {
+// We'll use the same constant Base64 string as before
+const connectionId = new Buffer(APP_ID).toString('base64'); // for testing
 
-        const { messages } = data;
+(async () => {
+  try {
+    // Initialize the SDK
+    await sdk.init({
+      appId: APP_ID,
+      appSecret: APP_SECRET,
+      basePath: 'https://api.symbl.ai',
+    })
 
-        // You get any messages here
-        messages.forEach(message => {
-          console.log(`Message: ${message.payload.content}`)
-        });
+    sdk.subscribeToRealtime(connectionId, (data) => {
+        const { type } = data;
+        if (type === 'message_response') {
 
-    } else if (type === 'insight_response') {
+            const { messages } = data;
 
-        const { insights } = data;
+            // You get any messages here
+            messages.forEach(message => {
+              console.log(`Message: ${message.payload.content}`)
+            });
 
-        // You get any insights here
-        insights.forEach(insight => {
-            console.log(`Insight: ${insight.type} - ${insight.text}`);
-        });
+        } else if (type === 'insight_response') {
 
-    } else if (type === 'topic_response') {
-        const { topics } = data;
-        
-        // You get any topic phrases here
-        topics.forEach(topic => {
-            console.log(`Topic detected: ${topic.phrases}`)
-        });
+            const { insights } = data;
 
-    } else if (type === 'message' && data.message.hasOwnProperty('punctuated')) {
+            // You get any insights here
+            insights.forEach(insight => {
+                console.log(`Insight: ${insight.type} - ${insight.text}`);
+            });
 
-        const { transcript } = data.message.punctuated;
+        } else if (type === 'topic_response') {
+            const { topics } = data;
+            
+            // You get any topic phrases here
+            topics.forEach(topic => {
+                console.log(`Topic detected: ${topic.phrases}`)
+            });
 
-        // Live punctuated full transcript as opposed to broken into messages
-        console.log(`Live transcript: ${transcript}`)
-    }
+        } else if (type === 'message' && data.message.hasOwnProperty('punctuated')) {
 
-    // The raw data response
-    console.log(`Response type: ${data.type}. Object: `, data);
+            const { transcript } = data.message.punctuated;
 
-});
+            // Live punctuated full transcript as opposed to broken into messages
+            console.log(`Live transcript: ${transcript}`)
+        }
+
+        // The raw data response
+        console.log(`Response type: ${data.type}. Object: `, data);
+
+    });
+  } catch (err) {
+    console.error('Error: ', err)
+  }
+})();
 ```
 
 ## Transcribing live audio input through Telephony API
+
+Symbl’s Telephony API allows you to connect to any conference call system using PSTN or SIP networks. This allows transcription and insights while using systems like Zoom, Twilio, Chime, or the like with minimal setup.
 
 As a simple test of the Telephony API you can call a phone number and see a live transcription of your phone call in the console.
 

@@ -1,5 +1,4 @@
 import WebSocket from '../websocket/WebSocket';
-import moment from 'moment';
 import logger from "../logger/Logger";
 import PQueue from "p-queue";
 
@@ -94,7 +93,7 @@ export default class EventApi {
 
     async enqueueEvent(event) {
         if(!event.timestamp) {
-            event.timestamp = moment().toISOString();
+            event.timestamp = new Date().toISOString();
         }
         await this.eventsQueue.add(() => this.sendEvent(event));
     }

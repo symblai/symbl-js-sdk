@@ -6,13 +6,9 @@
   "dependencies": {
     "@symblai/api-client": "^1.0.17",
     "@types/window-or-global": "^1.0.4",
-    "detect-node": "^2.0.4",
+    "detect-node": "^2.1.0",
     "loglevel": "^1.6.1",
-    "long": "^4.0.0",
-    "mamacro": "0.0.7",
     "mic": "^2.1.2",
-    "moment": "^2.23.0",
-    "node-gyp": "^3.8.0",
     "p-queue": "^6.4.0",
     "uuid": "latest",
     "websocket": "^1.0.28"
