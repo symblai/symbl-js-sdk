@@ -106,8 +106,16 @@ export default class RealtimeApi {
 
         this.webSocketStatus = webSocketConnectionStatus.error;
         logger.error(err);
+        console.log('err', err);
 
-        if (this.onConnectCallback) {
+        if (this.options.reconnectOnError) {
+            logger.debug("Attempting reconnect after error.");
+            this._cleanForReconnect();
+            setTimeout(() => {
+                this.connect();
+                this.startRequest();
+            }, 3000);
+        } else if (this.onConnectCallback) {
             if (typeof this.onConnectCallback === 'function') {
                 this.onConnectCallback(err);
             } else {
@@ -368,7 +376,7 @@ export default class RealtimeApi {
                     "WebSocket is connecting. Retry will be attempted.",
                     this.webSocketStatus
                 );
-                const retry = () => {
+                const retry = async () => {
 
                     if (!this.requestStarted) {
 
@@ -423,7 +431,7 @@ export default class RealtimeApi {
                 }));
 
                 if (this.options.disconnectOnStopRequest === false) {
-                    this.requestStarted = false;
+                    this._cleanForReconnect();
                 }
             } else {
                 // eslint-disable-next-line max-len
@@ -433,6 +441,11 @@ export default class RealtimeApi {
 
         });
 
+
+    }
+
+    _cleanForReconnect() {
+        this.requestStarted = false;
     }
 
     sendAudio (data) {
