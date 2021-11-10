@@ -376,8 +376,8 @@ export default class RealtimeApi {
                     "WebSocket is connecting. Retry will be attempted.",
                     this.webSocketStatus
                 );
-                const retry = async () => {
 
+                const retry = async () => {
                     if (!this.requestStarted) {
 
                         logger.info(
@@ -393,8 +393,11 @@ export default class RealtimeApi {
                             );
 
                         } else {
-
-                            this.backoff.run(retry.bind(this));
+                            try {
+                                this.backoff.run(retry.bind(this));
+                            } catch (e) {
+                                reject('Too many retries attempted. Try again later.');
+                            }
 
                         }
 
@@ -403,8 +406,12 @@ export default class RealtimeApi {
                     this.retryCount += 1;
 
                 };
-
-                this.backoff.run(retry.bind(this));
+                
+                try {
+                    this.backoff.run(retry.bind(this));
+                } catch (e) {
+                    reject('Too many retries attempted. Try again later.');
+                }
 
             }
 

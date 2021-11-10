@@ -206,7 +206,7 @@ const connectionId = new Buffer(APP_ID).toString('base64'); // for testing
       basePath: 'https://api.symbl.ai',
     })
 
-    sdk.subscribeToRealtime(connectionId, (data) => {
+    sdk.subscribeToStream(connectionId, (data) => {
         const { type } = data;
         if (type === 'message_response') {
 
@@ -309,10 +309,6 @@ const PHONE_NUMBER = '<your phone number>';
                 })
             } else if (type === 'insight_response') {
                 const { insights } = data;
-                // You get any insights here!!!
-                insights.forEach(insight => {
-                    console.log(`Insight: ${insight.type} - ${insight.text}`);
-                });
             }
         });
 
