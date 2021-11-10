@@ -68,7 +68,7 @@ export default class IEBackoff {
         if (this.retries === 0) {
 
             logger.error("No retries remaining.");
-            return false;
+            throw new Error("No retries remaining.");
 
         }
 
