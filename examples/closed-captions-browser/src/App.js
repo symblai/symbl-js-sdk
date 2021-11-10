@@ -60,25 +60,10 @@ const handleMicEvent = (setMuted, setMuting, setCaption) => {
             if (muted) {
                 symbl.unmute(stream);
                 setMuted(false);
-                // context && context.resume();
-                // if (stream) {
-                //     await stream.start(
-                //         context && context.sampleRate
-                //             ? {
-                //                   config: {
-                //                       sampleRateHertz: context.sampleRate,
-                //                   },
-                //               }
-                //             : {}
-                //     );
                 window.connectionActive = true;
-                //     setMuted(false);
-
-                //     gainNode.gain.value = 1;
                 setCaption(
                     "You're unmuted. Live captions will appear here..."
                 );
-                // }
             } else {
                 
                 symbl.mute(stream);
@@ -249,15 +234,7 @@ function App() {
                 setStarted(true);
             } else {
                 if (stream) {
-                    // context.close();
-
-                    // context = null;
-                    // gainNode = null;
-                    // processor = null;
-
                     await stream.close();
-
-                    // stream = null;
                 }
 
                 setStarted(false);
