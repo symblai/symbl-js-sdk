@@ -22,8 +22,6 @@ import Box from "@mui/material/Box";
 import { alpha, styled } from '@mui/material/styles';
 import { green } from '@mui/material/colors';
 
-import { sdk } from "@symblai/symbl-js/build/client.sdk.min.js";
-
 import symbl from "@symblai/symbl-web-sdk";
 
 import { v4 } from "uuid";
@@ -147,7 +145,7 @@ function App() {
             setRenderViaSubscription(event.target.checked);
 
             if (!subscribed) {
-                await sdk.subscribeToStream(connectionId, (data) => {
+                await symbl.subscribeToStream(connectionId, (data) => {
 //                    console.log(`Subscribe API Data`, data);
                     const { type } = data;
 
@@ -156,7 +154,7 @@ function App() {
 
                         // You get any messages here
                         messages.forEach((message) => {
-                            sdk.logger.log(
+                            symbl.logger.log(
                                 `Subscribe Message: ${message.payload.content}`
                             );
                         });
@@ -165,7 +163,7 @@ function App() {
 
                         // You get any insights here
                         insights.forEach((insight) => {
-                            sdk.logger.log(
+                            symbl.logger.log(
                                 `Subscribe Insight: ${insight.type} - ${insight.text}`
                             );
                         });
@@ -174,7 +172,7 @@ function App() {
 
                         // You get any topic phrases here
                         topics.forEach((topic) => {
-                            sdk.logger.log(
+                            symbl.logger.log(
                                 `Subscribe Topic detected: ${topic.phrases}`
                             );
                         });
@@ -185,7 +183,7 @@ function App() {
                         const { transcript } = data.message.punctuated;
 
                         // Live punctuated full transcript as opposed to broken into messages
-                        sdk.logger.log(
+                        symbl.logger.log(
                             `Subscribe Live transcript: ${transcript}`
                         );
 
