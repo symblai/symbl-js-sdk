@@ -206,7 +206,7 @@ const connectionId = new Buffer(APP_ID).toString('base64'); // for testing
       basePath: 'https://api.symbl.ai',
     })
 
-    sdk.subscribeToRealtime(connectionId, (data) => {
+    sdk.subscribeToStream(connectionId, (data) => {
         const { type } = data;
         if (type === 'message_response') {
 
