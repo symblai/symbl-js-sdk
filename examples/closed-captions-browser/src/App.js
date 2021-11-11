@@ -1,8 +1,7 @@
-import logo from "./logo.svg";
 import "./App.css";
 
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Stack from "@mui/material/Stack";
 
 import { Fab } from "@mui/material";
@@ -29,9 +28,8 @@ import { v4 } from "uuid";
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 
 let stream;
-let context, source;
 
-let processor, gainNode, connectionId;
+let connectionId;
 
 window.connectionActive = false;
 
@@ -92,34 +90,6 @@ const initSDK = async () => {
     });
 };
 
-const initiateConnection = async (handlers) => {
-    const id = v4();
-    console.log(id);
-
-    connectionId = id;
-
-    stream = await symbl.startRealtimeRequest({
-        id,
-        disconnectOnStopRequest: false,
-        disconnectOnStopRequestTimeout: 300,
-        noConnectionTimeout: 900,
-        insightTypes: ["action_item", "question"],
-        config: {
-            meetingTitle: "Mic Test", // Set name for meeting
-            confidenceThreshold: 0.7,
-            timezoneOffset: 480, // Offset in minutes from UTC
-            languageCode: "en-US",
-        },
-        speaker: {
-            userId: process.env.USER_ID || "tanaka@example.com", // Update with valid email or a unique user id
-            name: process.env.FULL_NAME || "Tanaka",
-        },
-        handlers,
-    }, true);
-
-    return stream;
-};
-
 function App() {
     const [started, setStarted] = useState(false);
     const [connecting, setConnecting] = useState(false);
@@ -131,6 +101,36 @@ function App() {
     const [subscribed, setSubscribed] = useState(false);
     const [subscribing, setSubscribing] = useState(false);
     const [renderViaSubscription, setRenderViaSubscription] = useState(false);
+    const [useOpus, setUseOpus] = useState(false);
+
+    const initiateConnection = async (handlers) => {
+        const id = v4();
+        console.log(id);
+
+        connectionId = id;
+
+        stream = await symbl.createStream({
+            id,
+            disconnectOnStopRequest: false,
+            disconnectOnStopRequestTimeout: 300,
+            noConnectionTimeout: 900,
+            insightTypes: ["action_item", "question"],
+            config: {
+                meetingTitle: "Mic Test", // Set name for meeting
+                confidenceThreshold: 0.7,
+                timezoneOffset: 480, // Offset in minutes from UTC
+                languageCode: "en-US",
+                encoding: useOpus ? 'opus' : 'LINEAR16',
+            },
+            speaker: {
+                userId: process.env.USER_ID || "tanaka@example.com", // Update with valid email or a unique user id
+                name: process.env.FULL_NAME || "Tanaka",
+            },
+            handlers,
+        }, true);
+
+        return stream;
+    };
 
     const handleSubscribeClick = async (event) => {
         if (event.target.checked) {
@@ -146,7 +146,7 @@ function App() {
 
             if (!subscribed) {
                 await symbl.subscribeToStream(connectionId, (data) => {
-//                    console.log(`Subscribe API Data`, data);
+
                     const { type } = data;
 
                     if (type === "message_response") {
@@ -195,7 +195,6 @@ function App() {
                 setSubscribed(true);
             } else {
                 console.log("Already subscribed");
-//                setRenderViaSubscription(event.target.checked);
                 setSubscribing(false);
             }
         } else {
@@ -252,6 +251,12 @@ function App() {
 
     const changeMicState = handleMicEvent(setMuted, setMuting, setCaption);
 
+    // useEffect(() => {
+    //     if (started) {
+    //         symbl.modifyRequest(stream, useOpus ? 'opus' : 'LINEAR16')
+    //     }
+    // }, [useOpus]);
+
     return (
         <div className="App">
             <header className="App-header">
@@ -298,6 +303,18 @@ function App() {
                                 }}
                                 disabled={connecting || !started || subscribing}
                                 label={renderViaSubscription ? "Subscribed" : "Not Subscribed"}
+                            />
+                        </FormGroup>
+                        <FormGroup>
+                            <FormControlLabel
+                                style={{ color: "#FFFFFF" }}
+                                control={<GreenSwitch />}
+                                checked={useOpus}
+                                onChange={(e) => {
+                                    setUseOpus(!useOpus);
+                                }}
+                                disabled={started}
+                                label={useOpus ? "Using Opus" : "Not Using Opus"}
                             />
                         </FormGroup>
                     </Stack>
