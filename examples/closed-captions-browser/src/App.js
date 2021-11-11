@@ -23,6 +23,8 @@ import { green } from '@mui/material/colors';
 
 import symbl from "@symblai/symbl-web-sdk";
 
+// import symbl from "./build-tsc";
+
 import { v4 } from "uuid";
 
 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -121,6 +123,7 @@ function App() {
                 timezoneOffset: 480, // Offset in minutes from UTC
                 languageCode: "en-US",
                 encoding: useOpus ? 'opus' : 'LINEAR16',
+                sampleRateHertz: 48000,
             },
             speaker: {
                 userId: process.env.USER_ID || "tanaka@example.com", // Update with valid email or a unique user id
