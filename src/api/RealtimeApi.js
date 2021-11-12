@@ -106,22 +106,15 @@ export default class RealtimeApi {
 
         this.webSocketStatus = webSocketConnectionStatus.error;
         logger.error(err);
-        console.log('err', err);
 
-        if (this.options.reconnectOnError) {
-            logger.debug("Attempting reconnect after error.");
-            this._cleanForReconnect();
-            setTimeout(() => {
-                this.connect();
-                this.startRequest();
-            }, 3000);
-        } else if (this.onConnectCallback) {
+        if (this.onConnectCallback) {
             if (typeof this.onConnectCallback === 'function') {
                 this.onConnectCallback(err);
             } else {
                 logger.warn("onConnectCallback is not a function");
             }
         }
+
     }
 
     onMessageWebSocket (result) {
@@ -194,11 +187,20 @@ export default class RealtimeApi {
 
     }
 
-    onCloseWebSocket () {
-        logger.debug("WebSocket Closed.");
+    onCloseWebSocket (event) {
         this.webSocketStatus = webSocketConnectionStatus.closed;
-        if (this.handlers && this.handlers._onClose) {
-            this.handlers._onClose();
+        if (this.options.reconnectOnError && event.wasClean === false) {
+            logger.debug("Attempting reconnect after error.");
+            this._cleanForReconnect();
+            setTimeout(() => {
+                this.connect();
+                this.startRequest();
+            }, 3000);
+        } else {
+            logger.debug("WebSocket Closed.");
+            if (this.handlers && this.handlers._onClose) {
+                this.handlers._onClose();
+            }
         }
     }
 
@@ -337,6 +339,7 @@ export default class RealtimeApi {
             }
 
         }
+        logger.info("Send start request.");
         logger.debug("Send start request.");
         this.requestStartedResolve = resolve;
         this.onRequestError = reject;
@@ -355,7 +358,7 @@ export default class RealtimeApi {
         if (noConnectionTimeout !== undefined) {
             configObj.noConnectionTimeout = noConnectionTimeout;
         }
-
+        logger.debug('start_request', JSON.stringify(configObj));
         this.webSocket.send(JSON.stringify(configObj));
     }
 
