@@ -1,7 +1,7 @@
 import "./App.css";
 
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Stack from "@mui/material/Stack";
 
 import { Fab } from "@mui/material";
@@ -26,8 +26,6 @@ import symbl from "@symblai/symbl-web-sdk";
 // import symbl from "./build-tsc";
 
 import { v4 } from "uuid";
-
-const AudioContext = window.AudioContext || window.webkitAudioContext;
 
 let stream;
 
@@ -103,7 +101,6 @@ function App() {
     const [subscribed, setSubscribed] = useState(false);
     const [subscribing, setSubscribing] = useState(false);
     const [renderViaSubscription, setRenderViaSubscription] = useState(false);
-    const [useOpus, setUseOpus] = useState(false);
 
     const initiateConnection = async (handlers) => {
         const id = v4();
@@ -122,7 +119,7 @@ function App() {
                 confidenceThreshold: 0.7,
                 timezoneOffset: 480, // Offset in minutes from UTC
                 languageCode: "en-US",
-                encoding: useOpus ? 'opus' : 'LINEAR16',
+                encoding: 'LINEAR16',
                 sampleRateHertz: 48000,
             },
             speaker: {
@@ -308,18 +305,7 @@ function App() {
                                 label={renderViaSubscription ? "Subscribed" : "Not Subscribed"}
                             />
                         </FormGroup>
-                        <FormGroup>
-                            <FormControlLabel
-                                style={{ color: "#FFFFFF" }}
-                                control={<GreenSwitch />}
-                                checked={useOpus}
-                                onChange={(e) => {
-                                    setUseOpus(!useOpus);
-                                }}
-                                disabled={started}
-                                label={useOpus ? "Using Opus" : "Not Using Opus"}
-                            />
-                        </FormGroup>
+                        
                     </Stack>
                     <Stack spacing={2} direction="row">
                         <Box
