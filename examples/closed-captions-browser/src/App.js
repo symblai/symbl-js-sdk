@@ -119,7 +119,7 @@ function App() {
                 confidenceThreshold: 0.7,
                 timezoneOffset: 480, // Offset in minutes from UTC
                 languageCode: "en-US",
-                encoding: 'LINEAR16',
+                encoding: 'opus',
                 sampleRateHertz: 48000,
             },
             speaker: {
