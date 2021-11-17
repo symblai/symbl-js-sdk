@@ -231,7 +231,7 @@ function App() {
                 setStarted(true);
             } else {
                 if (stream) {
-                    await stream.close();
+                    await symbl.stopRequest(stream);
                 }
 
                 setStarted(false);
