@@ -34,6 +34,21 @@ You can then install the library directly on your machine using:
 npm install @symblai/symbl-js
 ```
 
+## Import into your application
+
+
+Node Import: 
+
+```js
+const { sdk } = require('@symblai/symbl-js');
+```
+
+ES6 Import:
+
+```js
+import {sdk} from "@symblai/symbl-js/build/client.sdk.min";
+```
+
 
 ## Configuration
 
