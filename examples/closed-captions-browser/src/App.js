@@ -1,4 +1,3 @@
-import logo from "./logo.svg";
 import "./App.css";
 
 import React from "react";
@@ -22,16 +21,15 @@ import Box from "@mui/material/Box";
 import { alpha, styled } from '@mui/material/styles';
 import { green } from '@mui/material/colors';
 
-import { sdk } from "@symblai/symbl-js/build/client.sdk.min.js";
+import symbl from "@symblai/symbl-web-sdk";
+
+// import symbl from "./build-tsc";
 
 import { v4 } from "uuid";
 
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-
 let stream;
-let context, source;
 
-let processor, gainNode, connectionId;
+let connectionId;
 
 window.connectionActive = false;
 
@@ -56,42 +54,25 @@ const handleMicEvent = (setMuted, setMuting, setCaption) => {
             setMuting(true);
 
             if (muted) {
-                context && context.resume();
-                if (stream) {
-                    await stream.start(
-                        context && context.sampleRate
-                            ? {
-                                  config: {
-                                      sampleRateHertz: context.sampleRate,
-                                  },
-                              }
-                            : {}
-                    );
-                    window.connectionActive = true;
-                    setMuted(false);
-
-                    gainNode.gain.value = 1;
-                    setCaption(
-                        "You're unmuted. Live captions will appear here..."
-                    );
-                }
+                symbl.unmute(stream);
+                setMuted(false);
+                window.connectionActive = true;
+                setCaption(
+                    "You're unmuted. Live captions will appear here..."
+                );
             } else {
-                context && context.suspend();
-                if (stream) {
-                    gainNode.gain.value = 0;
-                    await stream.stop();
+                
+                symbl.mute(stream);
+                window.connectionActive = false;
 
-                    window.connectionActive = false;
-
-                    setMuted(true);
-                    setTimeout(() => {
-                        if (!window.connectionActive) {
-                            setCaption(
-                                "You're muted. Click the unmute button to resume captions."
-                            );
-                        }
-                    }, 3000);
-                }
+                setMuted(true);
+                setTimeout(() => {
+                    if (!window.connectionActive) {
+                        setCaption(
+                            "You're muted. Click the unmute button to resume captions."
+                        );
+                    }
+                }, 3000);
             }
 
             setMuting(false);
@@ -102,145 +83,11 @@ const handleMicEvent = (setMuted, setMuting, setCaption) => {
 };
 
 const initSDK = async () => {
-    await sdk.init({
+    await symbl.init({
         appId: process.env.REACT_APP_APP_ID,
         appSecret: process.env.REACT_APP_APP_SECRET,
         basePath: process.env.REACT_APP_BASE_PATH,
     });
-};
-
-const isAppleMicrophone = (device) => {
-    return (
-        device.label &&
-        (device.label.includes("MacBook") ||
-            device.label.includes("iPhone") ||
-            device.label.includes("iPad"))
-    );
-};
-
-const getUserMediaStream = async () => {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    console.log("All Devices: ", devices);
-    let device = devices.filter((device) => isAppleMicrophone(device));
-    if (device.length > 0 && window.safari !== undefined) {
-        console.log("Detected Safari. Using device: ", device[0]);
-        return navigator.mediaDevices.getUserMedia({
-            audio: {
-                deviceId: device[0].deviceId,
-            },
-            video: false,
-        });
-    } else {
-        try {
-            console.log("Not safari");
-            const defaultDevice = devices.filter(
-                (device) =>
-                    device.deviceId === "default" &&
-                    device.kind === "audioinput"
-            );
-            console.log("Default device: ", defaultDevice);
-            if (defaultDevice.length > 0) {
-                const device = devices.filter(
-                    (device) =>
-                        device.deviceId !== "default" &&
-                        defaultDevice[0].label.includes(device.label) &&
-                        device.kind === "audioinput"
-                );
-
-                console.log("Default device matches: ", device);
-
-                if (device.length > 0) {
-                    console.log(
-                        "The device to be used for getting stream: ",
-                        device
-                    );
-                    return navigator.mediaDevices.getUserMedia({
-                        audio: {
-                            deviceId: device[0].deviceId,
-                        },
-                        video: false,
-                    });
-                } else {
-                    return navigator.mediaDevices.getUserMedia({
-                        audio: true,
-                        video: false,
-                    });
-                }
-            } else {
-                return navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                    video: false,
-                });
-            }
-        } catch (e) {
-            console.error(e);
-        }
-    }
-};
-
-const processAudio = async (e) => {
-    if (window.connectionActive) {
-        const inputData =
-            e.inputBuffer.getChannelData(0) ||
-            new Float32Array(this.options.bufferSize);
-
-        // console.log(e.inputBuffer);
-
-        const targetBuffer = new Int16Array(inputData.length);
-        for (let index = inputData.length; index > 0; index--)
-            targetBuffer[index] = 32767 * Math.min(1, inputData[index]);
-
-        stream && stream.sendAudio(targetBuffer);
-    }
-};
-
-const startAudio = async (muted, muting) => {
-    if (!context) {
-        context = new AudioContext();
-
-        const audioStream = await getUserMediaStream();
-        processor = context.createScriptProcessor(2048, 1, 1);
-
-        source = context.createMediaStreamSource(audioStream);
-
-        gainNode = context.createGain();
-        gainNode.gain.value = 0;
-
-        source.connect(gainNode);
-        gainNode.connect(processor);
-        processor.connect(context.destination);
-
-        processor.onaudioprocess = processAudio;
-    }
-};
-
-const initiateConnection = async (handlers, sampleRateHertz) => {
-    const id = v4();
-    console.log(id);
-
-    connectionId = id;
-
-    stream = await sdk.createStream({
-        id,
-        disconnectOnStopRequest: false,
-        disconnectOnStopRequestTimeout: 300,
-        noConnectionTimeout: 900,
-        insightTypes: ["action_item", "question"],
-        config: {
-            meetingTitle: "Mic Test", // Set name for meeting
-            confidenceThreshold: 0.7,
-            timezoneOffset: 480, // Offset in minutes from UTC
-            languageCode: "en-US",
-            sampleRateHertz,
-        },
-        speaker: {
-            userId: process.env.USER_ID || "tanaka@example.com", // Update with valid email or a unique user id
-            name: process.env.FULL_NAME || "Tanaka",
-        },
-        handlers,
-    });
-
-    return stream;
 };
 
 function App() {
@@ -255,6 +102,36 @@ function App() {
     const [subscribing, setSubscribing] = useState(false);
     const [renderViaSubscription, setRenderViaSubscription] = useState(false);
 
+    const initiateConnection = async (handlers) => {
+        const id = v4();
+        console.log(id);
+
+        connectionId = id;
+
+        stream = await symbl.createStream({
+            id,
+            disconnectOnStopRequest: false,
+            disconnectOnStopRequestTimeout: 300,
+            noConnectionTimeout: 900,
+            insightTypes: ["action_item", "question"],
+            config: {
+                meetingTitle: "Mic Test", // Set name for meeting
+                confidenceThreshold: 0.7,
+                timezoneOffset: 480, // Offset in minutes from UTC
+                languageCode: "en-US",
+                encoding: 'opus',
+                sampleRateHertz: 48000,
+            },
+            speaker: {
+                userId: process.env.USER_ID || "tanaka@example.com", // Update with valid email or a unique user id
+                name: process.env.FULL_NAME || "Tanaka",
+            },
+            handlers,
+        }, true);
+
+        return stream;
+    };
+
     const handleSubscribeClick = async (event) => {
         if (event.target.checked) {
             console.log(`Rendering CC via Subscribe API`);
@@ -268,8 +145,8 @@ function App() {
             setRenderViaSubscription(event.target.checked);
 
             if (!subscribed) {
-                await sdk.subscribeToStream(connectionId, (data) => {
-//                    console.log(`Subscribe API Data`, data);
+                await symbl.subscribeToStream(connectionId, (data) => {
+
                     const { type } = data;
 
                     if (type === "message_response") {
@@ -277,7 +154,7 @@ function App() {
 
                         // You get any messages here
                         messages.forEach((message) => {
-                            sdk.logger.log(
+                            symbl.logger.log(
                                 `Subscribe Message: ${message.payload.content}`
                             );
                         });
@@ -286,7 +163,7 @@ function App() {
 
                         // You get any insights here
                         insights.forEach((insight) => {
-                            sdk.logger.log(
+                            symbl.logger.log(
                                 `Subscribe Insight: ${insight.type} - ${insight.text}`
                             );
                         });
@@ -295,7 +172,7 @@ function App() {
 
                         // You get any topic phrases here
                         topics.forEach((topic) => {
-                            sdk.logger.log(
+                            symbl.logger.log(
                                 `Subscribe Topic detected: ${topic.phrases}`
                             );
                         });
@@ -306,7 +183,7 @@ function App() {
                         const { transcript } = data.message.punctuated;
 
                         // Live punctuated full transcript as opposed to broken into messages
-                        sdk.logger.log(
+                        symbl.logger.log(
                             `Subscribe Live transcript: ${transcript}`
                         );
 
@@ -318,7 +195,6 @@ function App() {
                 setSubscribed(true);
             } else {
                 console.log("Already subscribed");
-//                setRenderViaSubscription(event.target.checked);
                 setSubscribing(false);
             }
         } else {
@@ -332,7 +208,6 @@ function App() {
             setCaption("Initalizing connection...");
 
             if (!started) {
-                await startAudio(muted, muting);
 
                 await initiateConnection(
                     {
@@ -347,8 +222,7 @@ function App() {
                         onStartedListening: () => {
                             setMuted(false);
                         },
-                    },
-                    context && context.sampleRate
+                    }
                 );
 
                 setCaption(
@@ -357,15 +231,7 @@ function App() {
                 setStarted(true);
             } else {
                 if (stream) {
-                    context.close();
-
-                    context = null;
-                    gainNode = null;
-                    processor = null;
-
-                    await stream.close();
-
-                    stream = null;
+                    await symbl.stopRequest(stream);
                 }
 
                 setStarted(false);
@@ -384,6 +250,12 @@ function App() {
     };
 
     const changeMicState = handleMicEvent(setMuted, setMuting, setCaption);
+
+    // useEffect(() => {
+    //     if (started) {
+    //         symbl.modifyRequest(stream, useOpus ? 'opus' : 'LINEAR16')
+    //     }
+    // }, [useOpus]);
 
     return (
         <div className="App">
@@ -433,6 +305,7 @@ function App() {
                                 label={renderViaSubscription ? "Subscribed" : "Not Subscribed"}
                             />
                         </FormGroup>
+                        
                     </Stack>
                     <Stack spacing={2} direction="row">
                         <Box

@@ -41,8 +41,8 @@ export default class WebSocket {
         this.options['onMessage'] ? this.options['onMessage'](data) : () => logger.debug(data);
     }
 
-    onClose(): void {
-        this.options['onClose'] ? this.options['onClose']() : () => logger.info('Connection Closed.');
+    onClose(event): void {
+        this.options['onClose'] ? this.options['onClose'](event) : () => logger.info('Connection Closed.');
     }
 
     onConnect(connection: any): void {
@@ -76,6 +76,7 @@ export default class WebSocket {
                     this.webSocket.send(data);
                 } else {
                     console.warn('WebSocket Connection not open. Couldn\'t send data.');
+                    // this.onError({});
                 }
             } catch(e) {
                 console.error('Error while sending the data.', e);
