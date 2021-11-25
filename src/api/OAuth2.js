@@ -25,9 +25,13 @@ export default class OAuth2 {
             300;
 
         this.refreshOn = null;
+        this.refreshTimeoutRef = null;
 
         this.init = this.init.bind(this);
         this.processTokenResult = this.processTokenResult.bind(this);
+
+        this.validateToken = this.validateToken.bind(this);
+        this.refreshAuthToken = this.refreshAuthToken.bind(this);
 
     }
 
@@ -45,27 +49,87 @@ export default class OAuth2 {
         logger.trace('Token will expire in seconds: ', this.expiresIn);
 
         this.updatedOn = new Date();
-        logger.trace('Token updated on : ', this.updatedOn);
+        logger.trace('Token updated on: ', this.updatedOn);
         this.expiresOn = new Date(this.updatedOn.getTime() + this.expiresIn * 1000)
         logger.trace('Token will expire on : ', this.expiresOn);
 
         if (this.automaticallyRefreshToken) {
             this.refreshOn = new Date(this.expiresOn.getTime() - this.refreshTimeBeforeExpiry*1000);
             logger.trace('Token will be refreshed on: ', this.refreshOn);
-            const refreshDuration = (this.expiresIn - this.refreshTimeBeforeExpiry) * 1000;
+            let refreshDuration = (this.expiresIn - this.refreshTimeBeforeExpiry) * 1000;
             logger.trace('Refresh is scheduled in millis: ', refreshDuration);
-            setTimeout(() => {
+            if (refreshDuration < 0) {
+                refreshDuration = this.expiresIn * 1000;
+            }
+
+            if (this.refreshTimeoutRef) {
+                clearTimeout(this.refreshTimeoutRef);
+            }
+
+            this.refreshTimeoutRef = setTimeout(() => {
                 this.init(this.appId, this.appSecret)
                     .then((() => {
                         logger.trace('Token refreshed');
                     })).catch((e) => {
                         logger.error(e);
-                })
+                    })
             }, refreshDuration);
         }
     }
 
-    init(appId, appSecret, appToken) {
+    refreshAuthToken() {
+        return this.validateToken(this.activeToken);
+    }
+
+    validateToken(token) {
+        return new Promise(async (resolve, reject) => {
+            if (!!token) {
+                const tokenPayload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+                if (tokenPayload.exp) {
+                    const expiry = Math.floor(tokenPayload.exp - Date.now() / 1000);
+                    if (expiry <= 60) {
+                        if (this.appId && this.appSecret) {
+                            try {
+                                const tokenData = await this.init(this.appId, this.appSecret);
+                                resolve(tokenData);
+                            } catch (e) {
+                                logger.error(`Exception caught while refreshing token: ${e && e.message}`);
+                                reject({
+                                    message: `The authentication token failed with exception: ${e && e.message}`
+                                })
+                            }
+
+                            return;
+                        } else {
+                            reject({
+                                message: `Provided token has expired`
+                            });
+                        }
+
+                        return;
+                    }
+
+                    const data = {
+                        accessToken: token,
+                        expiresIn: expiry
+                    };
+
+                    this.processTokenResult(data);
+                    resolve(data);
+                } else {
+                    reject({
+                        message: `Provided token is invalid`
+                    });
+                }
+            } else {
+                reject({
+                    message: `Provided token was empty, undefined or null`
+                });
+            }
+        });
+    }
+
+    init(appId, appSecret, token) {
         if (arguments.length < 2) {
             throw new Error(`Expected number of arguments 2, detected: ${arguments.length}`);
         }
@@ -81,16 +145,25 @@ export default class OAuth2 {
             });
         } else {
 
-            if (!appId) {
+            if (!appId && !token) {
                 throw new Error('appId is required.');
             }
 
-            if (!appSecret) {
+            if (!appSecret && !token) {
                 throw new Error('appSecret is required.');
             }
 
+            if ((!appId || !appSecret) && !token) {
+                throw new Error('token or appId/appSecret pair is required');
+            }
+
+
             this.appId = appId;
             this.appSecret = appSecret;
+
+            if (token) {
+                return this.validateToken(token);
+            }
 
             return new Promise((resolve, reject) => {
                 logger.trace(`Initializing app with appId and appSecret`, appId, appSecret);

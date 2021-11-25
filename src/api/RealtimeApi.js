@@ -201,7 +201,7 @@ export default class RealtimeApi {
     }
 
     onRequestStart (message) {
-
+        logger.debug(`Total time to receive 'recognition_started' after 'start_request' was sent: ${(Date.now() - this.requestStartSentEpoch) / 1000} seconds`);
         if (this.requestStartedResolve) {
 
             this.requestStartedResolve(message.data &&
@@ -291,6 +291,7 @@ export default class RealtimeApi {
         this.requestStartedResolve = resolve;
         this.onRequestError = reject;
         this.requestStarted = true;
+        this.requestStartSentEpoch = Date.now();
         let configObj = {
             "type": "start_request",
             "insightTypes": insightTypes || [],

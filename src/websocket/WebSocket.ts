@@ -8,6 +8,7 @@ export default class WebSocket {
     options: any;
     webSocket: any;
     webSocketConnection: any;
+    connectionStartTime: number;
 
     constructor(options: any = {}) {
         if (!options.url) {
@@ -46,12 +47,15 @@ export default class WebSocket {
     }
 
     onConnect(connection: any): void {
+        logger.debug(`Connection established in ${(Date.now() - this.connectionStartTime) / 1000} seconds`);
         this.webSocketConnection = connection;
         this.webSocket.onerror = this.onError;
         this.webSocket.onmessage = this.onMessage;
         this.webSocket.onclose = this.onClose;
         
         this.options['onConnect'] ? this.options['onConnect'](connection) : logger.info('Connection established.');
+        this.connectionStartTime = Date.now();
+        logger.debug(`Establishing connection at: ${new Date().toISOString()}`);
     }
 
     connect(): void {
