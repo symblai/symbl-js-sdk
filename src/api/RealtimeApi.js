@@ -154,7 +154,7 @@ export default class RealtimeApi {
                     this.onInsightResponse(data.insights);
                     break;
                 case "tracker_response":
-                    this.onTrackerResponse(data.trackers);
+                    this.onTrackerResponse(data);
                     break;
                 case "topic_response":
                     this.onTopicResponse(data.topics);
