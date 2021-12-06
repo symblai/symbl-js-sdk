@@ -312,7 +312,7 @@ export default class RealtimeApi {
 
     startRequest () {
 
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
 
             if (this.webSocketStatus === webSocketConnectionStatus.connected) {
 
@@ -345,7 +345,10 @@ export default class RealtimeApi {
 
                         } else {
                             try {
-                                this.backoff.run(retry.bind(this));
+                                setTimeout(async () => {
+                                    await retry();
+                                    await this.backoff.run(retry.bind(this));
+                                }, 500)
                             } catch (e) {
                                 reject('Too many retries attempted. Try again later.');
                             }
