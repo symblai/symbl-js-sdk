@@ -411,7 +411,10 @@ export default class RealtimeApi {
                 };
                 
                 try {
-                    this.backoff.run(retry.bind(this));
+                    setTimeout(async () => {
+                        await retry();
+                        await this.backoff.run(retry.bind(this));
+                    }, 500)
                 } catch (e) {
                     reject('Too many retries attempted. Try again later.');
                 }
