@@ -27,7 +27,7 @@ const webSocketConnectionStatus = {
 export default class RealtimeApi {
 
     // eslint-disable-next-line default-param-last
-    constructor (options = {}, oauth2) {
+    constructor (options = {}, oauth2, usePreviousGenerationResponses = false, handlers = {}) {
 
         let basePath = options.basePath || Config.basePath;
         basePath = basePath.replace(
@@ -50,6 +50,8 @@ export default class RealtimeApi {
         this.id = id
             ? id
             : uuid();
+
+        this.usePreviousGenerationResponses = usePreviousGenerationResponses;
 
         if (options.backoff) {
 
@@ -75,6 +77,7 @@ export default class RealtimeApi {
         this.onMessageWebSocket = this.onMessageWebSocket.bind(this);
         this.onCloseWebSocket = this.onCloseWebSocket.bind(this);
 
+        this.onStartedListening = this.onStartedListening.bind(this);
         this.onSpeechDetected = this.onSpeechDetected.bind(this);
         this.onRequestStart = this.onRequestStart.bind(this);
         this.onRequestStop = this.onRequestStop.bind(this);
@@ -88,17 +91,29 @@ export default class RealtimeApi {
         this.sendStart = this.sendStart.bind(this);
 
         this.oauth2 = oauth2;
-        this.handlers = this.options.handlers || {};
+        this.handlers = { ...(this.options.handlers || {}), ...handlers };
 
         this.retryCount = 0;
         this.requestStarted = false;
 
+        this.conversationId = new Promise((resolve, reject) => {
+            this.conversationIdSuccess = resolve;
+            this.conversationIdError = reject;
+        });
     }
 
     onErrorWebSocket (err) {
 
         this.webSocketStatus = webSocketConnectionStatus.error;
         logger.error(err);
+
+        if (this.onConnectCallback) {
+            if (typeof this.onConnectCallback === 'function') {
+                this.onConnectCallback(err);
+            } else {
+                logger.warn("onConnectCallback is not a function");
+            }
+        }
 
     }
 
@@ -119,18 +134,19 @@ export default class RealtimeApi {
                 switch (type) {
 
                 case "recognition_started":
+                    if (!this.requestStarted)
+                        this.requestStarted = true;
                     this.onRequestStart(data.message);
                     break;
                 case "recognition_result":
                     this.onSpeechDetected(data.message);
                     break;
+                case "started_listening":
+                    this.requestStarted = true;
+                    this.onStartedListening(data.message);
+                    break;
                 case "recognition_stopped":
-
-                    /*
-                     * console.log('Recognition stopped received');
-                     * this.onRequestStop();
-                     */
-
+                    this.onRequestStop();
                     break;
                 case "conversation_completed":
                     this.onRequestStop(data.message);
@@ -171,10 +187,24 @@ export default class RealtimeApi {
 
     }
 
-    onCloseWebSocket () {
+    onCloseWebSocket (event) {
 
         logger.debug("WebSocket Closed.");
         this.webSocketStatus = webSocketConnectionStatus.closed;
+
+        if (this.options.reconnectOnError && event.wasClean === false) {
+            logger.debug("Attempting reconnect after error.");
+            this._cleanForReconnect();
+            setTimeout(() => {
+                this.connect();
+                this.startRequest();
+            }, 3000);
+        } else {
+            logger.debug("WebSocket Closed.");
+            if (this.handlers && this.handlers._onClose) {
+                this.handlers._onClose();
+            }
+        }
 
     }
 
@@ -183,30 +213,60 @@ export default class RealtimeApi {
         logger.debug("WebSocket Connected.");
         this.webSocketStatus = webSocketConnectionStatus.connected;
 
+        if (this.onConnectCallback) {
+            logger.debug(`Invoking this.onConnectCallback`, typeof this.onConnectCallback);
+            if (typeof this.onConnectCallback === 'function') {
+                this.onConnectCallback(null);
+            } else {
+                logger.warn("onConnectCallback is not a function");
+            }
+        }
+
     }
 
-    connect () {
+    connect (onConnectCallback) {
 
         logger.debug("WebSocket Connecting.");
-        this.webSocketStatus = webSocketConnectionStatus.connecting;
-        this.webSocket = new WebSocket({
-            "accessToken": this.oauth2.activeToken,
-            "onClose": this.onCloseWebSocket,
-            "onConnect": this.onConnectWebSocket,
-            "onError": this.onErrorWebSocket,
-            "onMessage": this.onMessageWebSocket,
-            "url": this.webSocketUrl
-        });
+        if (this.webSocketStatus !== webSocketConnectionStatus.connected) {
+            this.webSocketStatus = webSocketConnectionStatus.connecting;
+            this.onConnectCallback = onConnectCallback;
 
+            this.webSocket = new WebSocket({
+                "accessToken": this.oauth2.activeToken,
+                "onClose": this.onCloseWebSocket,
+                "onConnect": this.onConnectWebSocket,
+                "onError": this.onErrorWebSocket,
+                "onMessage": this.onMessageWebSocket,
+                "url": this.webSocketUrl
+            });
+        }
+
+    }
+
+    onStartedListening(message) {
+        if (!this.usePreviousGenerationResponses) {
+            if (this.requestStartedResolve) {
+                this.requestStartedResolve();
+                this.requestStartedResolve = null;
+            }
+        } else {
+            logger.info(`Using the older version of 'createStream' - 'startRealtimeRequest'. 'startRealtimeRequest' will be deprecated in the future in favor of new function 'createStream' that provides lower latencies in processing events.`);
+        }
     }
 
     onRequestStart (message) {
+        if (this.usePreviousGenerationResponses) {
+            if (this.requestStartedResolve) {
+                this.conversationIdSuccess(message.data && message.data.conversationId);
 
-        if (this.requestStartedResolve) {
-
-            this.requestStartedResolve(message.data &&
-                message.data.conversationId);
-            this.requestStartedResolve = null;
+                this.requestStartedResolve(message.data && message.data.conversationId);
+                this.requestStartedResolve = null;
+            }
+        } else {
+            const conversationId = message.data && message.data.conversationId;
+            if (conversationId) {
+                this.conversationIdSuccess(conversationId);
+            }
 
         }
 
@@ -214,13 +274,19 @@ export default class RealtimeApi {
 
     onRequestStop (conversationData) {
 
-        if (this.requestStoppedResolve) {
-
-            this.requestStoppedResolve(conversationData);
-            this.requestStoppedResolve = null;
+        if (this.usePreviousGenerationResponses) {
+            if (this.requestStoppedResolve && conversationData) {
+                this.requestStoppedResolve(conversationData);
+                this.requestStoppedResolve = null;
+            }
+        } else {
+            if (this.requestStoppedResolve) {
+                this.requestStoppedResolve();
+                this.requestStoppedResolve = null;
+            }
 
         }
-        if (this.disconnectOnStopRequest !== false) {
+        if (this.options.disconnectOnStopRequest !== false) {
             this.webSocket.disconnect();
         }
 
@@ -290,7 +356,6 @@ export default class RealtimeApi {
         logger.debug("Send start request.");
         this.requestStartedResolve = resolve;
         this.onRequestError = reject;
-        this.requestStarted = true;
         let configObj = {
             "type": "start_request",
             "insightTypes": insightTypes || [],
@@ -328,7 +393,7 @@ export default class RealtimeApi {
                     this.webSocketStatus
                 );
 
-                const retry = () => {
+                const retry = async () => {
                     if (!this.requestStarted) {
 
                         logger.info(
@@ -378,6 +443,12 @@ export default class RealtimeApi {
         return new Promise((resolve, reject) => {
 
             if (this.webSocketStatus === webSocketConnectionStatus.connected) {
+                if (!this.requestStarted) {
+                    logger.warn(`Invoked stopRequest() on an idle stream for id: ${this.id}`);
+                    resolve();
+
+                    return;
+                }
 
                 logger.debug("Send stop request.");
                 this.requestStoppedResolve = resolve;
@@ -385,6 +456,10 @@ export default class RealtimeApi {
                 this.webSocket.send(JSON.stringify({
                     "type": "stop_request"
                 }));
+
+                if (this.options.disconnectOnStopRequest === false) {
+                    this._cleanForReconnect();
+                }
 
             } else {
 
@@ -396,12 +471,14 @@ export default class RealtimeApi {
 
         });
 
+    } 
+
+    _cleanForReconnect() {
+        this.requestStarted = false;
     }
 
     sendAudio (data) {
-
-        this.webSocket.send(data);
-
+        this.requestStarted && this.webSocket.send(data);
     }
 
     onSpeechDetected (data) {

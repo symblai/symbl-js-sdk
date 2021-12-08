@@ -41,8 +41,8 @@ export default class WebSocket {
         this.options['onMessage'] ? this.options['onMessage'](data) : () => logger.debug(data);
     }
 
-    onClose(): void {
-        this.options['onClose'] ? this.options['onClose']() : () => logger.info('Connection Closed.');
+    onClose(event): void {
+        this.options['onClose'] ? this.options['onClose'](event) : () => logger.info('Connection Closed.');
     }
 
     onConnect(connection: any): void {
