@@ -81,7 +81,7 @@ export default class ClientSDK {
         });
     }
 
-    async startRealtimeRequest (options = {}) {
+    async createStream (options = {}) {
 
         if (!this.oauth2) {
 
