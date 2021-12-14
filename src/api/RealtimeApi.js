@@ -188,10 +188,7 @@ export default class RealtimeApi {
     }
 
     onCloseWebSocket (event) {
-
-        logger.debug("WebSocket Closed.");
         this.webSocketStatus = webSocketConnectionStatus.closed;
-
         if (this.options.reconnectOnError && event.wasClean === false) {
             logger.debug("Attempting reconnect after error.");
             this._cleanForReconnect();
@@ -205,7 +202,6 @@ export default class RealtimeApi {
                 this.handlers._onClose();
             }
         }
-
     }
 
     onConnectWebSocket () {
@@ -221,7 +217,6 @@ export default class RealtimeApi {
                 logger.warn("onConnectCallback is not a function");
             }
         }
-
     }
 
     connect (onConnectCallback) {
@@ -267,13 +262,10 @@ export default class RealtimeApi {
             if (conversationId) {
                 this.conversationIdSuccess(conversationId);
             }
-
         }
-
     }
 
     onRequestStop (conversationData) {
-
         if (this.usePreviousGenerationResponses) {
             if (this.requestStoppedResolve && conversationData) {
                 this.requestStoppedResolve(conversationData);
@@ -284,8 +276,8 @@ export default class RealtimeApi {
                 this.requestStoppedResolve();
                 this.requestStoppedResolve = null;
             }
-
         }
+
         if (this.options.disconnectOnStopRequest !== false) {
             this.webSocket.disconnect();
         }
@@ -340,15 +332,11 @@ export default class RealtimeApi {
                         break;
                     default:
                         break;
-
                     }
-
                 });
 
                 if (Object.keys(speechRecognition).length > 0) {
-
                     config.speechRecognition = speechRecognition;
-
                 }
             }
 
@@ -377,7 +365,7 @@ export default class RealtimeApi {
 
     startRequest () {
 
-        return new Promise(async (resolve, reject) => {
+        return new Promise((resolve, reject) => {
 
             if (this.webSocketStatus === webSocketConnectionStatus.connected) {
 
@@ -410,10 +398,7 @@ export default class RealtimeApi {
 
                         } else {
                             try {
-                                setTimeout(async () => {
-                                    await retry();
-                                    await this.backoff.run(retry.bind(this));
-                                }, 500)
+                                this.backoff.run(retry.bind(this));
                             } catch (e) {
                                 reject('Too many retries attempted. Try again later.');
                             }
@@ -427,7 +412,10 @@ export default class RealtimeApi {
                 };
                 
                 try {
-                    this.backoff.run(retry.bind(this));
+                    setTimeout(async () => {
+                        await retry();
+                        await this.backoff.run(retry.bind(this));
+                    }, 500)
                 } catch (e) {
                     reject('Too many retries attempted. Try again later.');
                 }
@@ -439,9 +427,7 @@ export default class RealtimeApi {
     }
 
     stopRequest () {
-
         return new Promise((resolve, reject) => {
-
             if (this.webSocketStatus === webSocketConnectionStatus.connected) {
                 if (!this.requestStarted) {
                     logger.warn(`Invoked stopRequest() on an idle stream for id: ${this.id}`);
@@ -451,6 +437,7 @@ export default class RealtimeApi {
                 }
 
                 logger.debug("Send stop request.");
+
                 this.requestStoppedResolve = resolve;
                 this.onRequestError = reject;
                 this.webSocket.send(JSON.stringify({
@@ -460,18 +447,15 @@ export default class RealtimeApi {
                 if (this.options.disconnectOnStopRequest === false) {
                     this._cleanForReconnect();
                 }
-
             } else {
-
                 // eslint-disable-next-line max-len
                 logger.warn("WebSocket connection is not connected. No stop request sent.");
                 resolve();
-
             }
 
         });
 
-    } 
+    }
 
     _cleanForReconnect() {
         this.requestStarted = false;

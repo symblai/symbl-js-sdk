@@ -23,7 +23,7 @@ const connectionId = Buffer.from("Symbl.ai is the BEST!").toString("base64");
             "logLevel": 1
         });
 
-        sdk.subscribeToRealtime(
+        sdk.subscribeToStream(
             connectionId,
             (data) => {
 

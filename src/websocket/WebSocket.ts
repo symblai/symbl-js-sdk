@@ -50,7 +50,7 @@ export default class WebSocket {
         this.webSocket.onerror = this.onError;
         this.webSocket.onmessage = this.onMessage;
         this.webSocket.onclose = this.onClose;
-        
+
         this.options['onConnect'] ? this.options['onConnect'](connection) : logger.info('Connection established.');
     }
 
@@ -59,7 +59,7 @@ export default class WebSocket {
         this.webSocket = new W3CWebSocket(urlWithToken, null, null, {
             'X-API-KEY': this.accessToken
         });
-        
+
         this.webSocket.binaryType = 'arraybuffer';
         // TODO: Support for token in url
         this.webSocket.onopen = this.onConnect;
@@ -76,6 +76,7 @@ export default class WebSocket {
                     this.webSocket.send(data);
                 } else {
                     console.warn('WebSocket Connection not open. Couldn\'t send data.');
+                    // this.onError({});
                 }
             } catch(e) {
                 console.error('Error while sending the data.', e);

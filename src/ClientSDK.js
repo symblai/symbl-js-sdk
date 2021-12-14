@@ -12,8 +12,6 @@ import logger from "./logger/Logger";
 import isNode from "detect-node";
 import {ApiClient} from "@symblai/api-client";
 import EventApi from "./event/EventApi";
-import {v4} from "uuid";
-
 
 export default class ClientSDK {
 
@@ -187,7 +185,6 @@ export default class ClientSDK {
     async startRealtimeRequest (options = {}) {
         if (!this.oauth2) {
             throw new Error("SDK is not initialized or failed during initialization.");
-
         }
 
         options.basePath = options.basePath || this.basePath;
@@ -217,6 +214,7 @@ export default class ClientSDK {
                             if (conversationData) {
                                 delete conversationData.type;
                             }
+
                             this.cache.remove(options.id);
                             resolve(conversationData);
                         }).catch((err) => {
@@ -226,9 +224,7 @@ export default class ClientSDK {
 
                     }),
                     "sendAudio": (data) => {
-
                         realtimeClient.sendAudio(data);
-
                     },
                     "connectionId": realtimeClient.id,
                     conversationId
@@ -237,7 +233,6 @@ export default class ClientSDK {
             }).catch((err) => {
                 reject(err);
             });
-
         };
 
         return new Promise((resolve, reject) => {
