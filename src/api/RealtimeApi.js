@@ -207,9 +207,13 @@ export default class RealtimeApi {
             }, 3000);
         } else {
             logger.debug("WebSocket Closed.");
-            if (this.handlers && this.handlers._onClose) {
-                this.handlers._onClose();
-            }
+        }
+        if (this.handlers && this.handlers.onClose) {
+            setImmediate(() => {
+
+                this.handlers.onClose(event);
+
+            });
         }
     }
 
