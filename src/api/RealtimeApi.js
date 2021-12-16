@@ -150,6 +150,15 @@ export default class RealtimeApi {
                     break;
                 case "conversation_completed":
                     this.onRequestStop(data.message);
+                    if (this.handlers.onConversationCompleted) {
+
+                        setImmediate(() => {
+
+                            this.handlers.onConversationCompleted(data);
+
+                        });
+
+                    }
                     break;
                 case "error":
                     this.onRequestError(data);
@@ -247,6 +256,16 @@ export default class RealtimeApi {
         } else {
             logger.info(`Using the older version of 'createStream' - 'startRealtimeRequest'. 'startRealtimeRequest' will be deprecated in the future in favor of new function 'createStream' that provides lower latencies in processing events.`);
         }
+
+        if (this.handlers.onStartedListening) {
+
+            setImmediate(() => {
+
+                this.handlers.onStartedListening(message);
+
+            });
+
+        }
     }
 
     onRequestStart (message) {
@@ -262,6 +281,16 @@ export default class RealtimeApi {
             if (conversationId) {
                 this.conversationIdSuccess(conversationId);
             }
+        }
+
+        if (this.handlers.onRequestStart) {
+
+            setImmediate(() => {
+
+                this.handlers.onRequestStart(message);
+
+            });
+
         }
     }
 
@@ -282,6 +311,16 @@ export default class RealtimeApi {
             this.webSocket.disconnect();
         }
 
+        if (this.handlers.onRequestStop) {
+
+            setImmediate(() => {
+
+                this.handlers.onRequestStop(conversationData);
+
+            });
+
+        }
+
     }
 
     onRequestError (err) {
@@ -290,6 +329,16 @@ export default class RealtimeApi {
 
             this.requestErrorReject(err);
             this.requestErrorReject = null;
+
+        }
+
+        if (this.handlers.onRequestError) {
+
+            setImmediate(() => {
+
+                this.handlers.onRequestError(err);
+
+            });
 
         }
 
