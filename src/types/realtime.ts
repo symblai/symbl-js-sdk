@@ -137,7 +137,14 @@ interface SymblRealtimeConnection {
 }
 
 interface SessionOptions {
-    callback: unknown;
+    options: {
+        reconnectOnError: boolean;
+        handlers: {
+            onSubscribe: (arg?: any) => void;
+            onReconnectFail?: (arg?: any) => void;
+            onClose?: (arg?: any) => void;
+        }
+    }
     id: string;
     basePath?: string;
     isStreaming: boolean;

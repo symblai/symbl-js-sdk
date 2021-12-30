@@ -1,5 +1,6 @@
 /* eslint-disable sort-keys */
 /* eslint-disable max-len */
+import IEBackoff from "./InverseExpBackoff";
 import WebSocket from "../websocket/WebSocket";
 import config from "../config";
 import logger from "../logger/Logger";
@@ -19,8 +20,10 @@ export default class SessionApi {
 
     id: string;
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    callback: Function;
+    connectionOptions: {
+        handlers: any,
+        reconnectOnError: boolean;
+    }
 
     webSocketUrl: string;
 
@@ -30,14 +33,19 @@ export default class SessionApi {
 
     webSocketStatus: string;
 
+    backoff: IEBackoff;
+
+    onMessage: (arg?: any) => void;
+
     constructor (options: SessionOptions, oauth2: OAuth2Object) {
 
-        const {callback} = options;
+        this.connectionOptions = options.options;
+        const onMessage = this.connectionOptions.handlers.onMessage;
         const {isStreaming} = options;
 
-        if (!callback || typeof callback !== "function") {
+        if (!onMessage || typeof onMessage !== "function") {
 
-            throw new Error("callback function is required for establishing connection with Session-Manger Websocket.");
+            throw new Error("onMessage function is required for establishing connection with Session-Manger Websocket.");
 
         }
 
@@ -71,9 +79,11 @@ export default class SessionApi {
 
         }
 
+        this.backoff = new IEBackoff();
+
         this.oauth2 = oauth2;
         this.id = id;
-        this.callback = callback;
+        this.onMessage = onMessage;
         this.webSocketUrl = `${uri}/${this.id}`;
         this.options = options;
 
@@ -86,20 +96,37 @@ export default class SessionApi {
 
     }
 
-    onCloseWebSocket (): void {
-
-        logger.debug(
-            new Date().toISOString(),
-            "WebSocket Closed."
-        );
+    onCloseWebSocket (event: any): void {
         this.webSocketStatus = webSocketConnectionStatus.closed;
-
+        if (this.connectionOptions.reconnectOnError === false && event.wasClean === false) {
+            logger.debug("Attempting reconnect after error.");
+            // this._cleanForReconnect();
+            setTimeout(() => {
+                this.connect().catch((err) => {
+                    if (this.connectionOptions.handlers.onReconnectFail && typeof this.connectionOptions.handlers.onReconnectFail === "function") {
+                        this.connectionOptions.handlers.onReconnectFail(err);
+                    }
+                });
+            }, 3000);
+        } else {
+            logger.debug(
+                new Date().toISOString(),
+                "WebSocket Closed."
+            );
+        }
+        if (this.connectionOptions.handlers.onClose && typeof this.connectionOptions.handlers.onClose === "function") {
+            this.connectionOptions.handlers.onClose();
+        }
     }
 
     onConnectWebSocket (): void {
 
         logger.debug("WebSocket Connected.");
         this.webSocketStatus = webSocketConnectionStatus.connected;
+
+        if (this.connectionOptions.handlers.onSubscribe && typeof this.connectionOptions.handlers.onSubscribe === "function") {
+            this.connectionOptions.handlers.onSubscribe();
+        }
 
     }
 
@@ -120,23 +147,34 @@ export default class SessionApi {
                 "Websocket Message: ",
                 {data}
             );
-            this.callback(data);
+            this.onMessage(data);
 
         }
 
     }
 
-    connect (): void {
+    connect (): Promise<void> {
 
-        logger.debug(`WebSocket Connecting on: ${this.webSocketUrl}`);
-        this.webSocketStatus = webSocketConnectionStatus.connecting;
-        this.webSocket = new WebSocket({
-            "url": this.webSocketUrl,
-            "accessToken": this.oauth2.activeToken,
-            "onError": this.onErrorWebSocket,
-            "onClose": this.onCloseWebSocket,
-            "onMessage": this.onMessageWebSocket,
-            "onConnect": this.onConnectWebSocket
+        return new Promise((resolve, reject) => {
+            if (this.webSocketStatus !== webSocketConnectionStatus.connected) {
+                logger.debug(`WebSocket Connecting on: ${this.webSocketUrl}`);
+                if (this.webSocketStatus !== webSocketConnectionStatus.connecting) {
+                    this.webSocketStatus = webSocketConnectionStatus.connecting;
+                }
+                this.webSocket = new WebSocket({
+                    "url": this.webSocketUrl,
+                    "accessToken": this.oauth2.activeToken,
+                    "onError": this.onErrorWebSocket,
+                    "onClose": this.onCloseWebSocket,
+                    "onMessage": this.onMessageWebSocket,
+                    "onConnect": this.onConnectWebSocket
+                });
+                this.backoff.run(this.connect).catch(() => {
+                    reject('Too many retries attempted. Try again later.');
+                });
+            } else if (this.webSocketStatus === webSocketConnectionStatus.connected) {
+                resolve();
+            }
         });
 
     }

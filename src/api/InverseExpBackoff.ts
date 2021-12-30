@@ -4,6 +4,11 @@ import logger from "../logger/Logger";
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable arrow-body-style */
 
+const DEFAULT_FACTOR = 0.75;
+const DEFAULT_MAX_RETRIES = 10;
+const DEFAULT_MAX = 5000;
+const DEFAULT_MIN = 100;
+
 export default class IEBackoff {
 
     max: number;
@@ -23,7 +28,7 @@ export default class IEBackoff {
      * @param {integer} maxRetries - maximum number of retries
      */
     // eslint-disable-next-line max-params
-    constructor (max = 5000, min = 100, factor = 0.75, maxRetries = 10) {
+    constructor (max = DEFAULT_MAX, min = DEFAULT_MIN, factor = DEFAULT_FACTOR, maxRetries = DEFAULT_MAX_RETRIES) {
 
         if (max <= min) {
 
@@ -49,6 +54,14 @@ export default class IEBackoff {
         this.retries = maxRetries;
         this.nextDelay = max;
 
+    }
+
+    reset (): void {
+        this.max = DEFAULT_MAX;
+        this.min = DEFAULT_MIN;
+        this.factor = DEFAULT_FACTOR;
+        this.retries = DEFAULT_MAX_RETRIES;
+        this.nextDelay = DEFAULT_MAX;
     }
 
     /**

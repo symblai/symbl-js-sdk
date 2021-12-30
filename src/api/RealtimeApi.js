@@ -201,9 +201,14 @@ export default class RealtimeApi {
         if (this.options.reconnectOnError && event.wasClean === false) {
             logger.debug("Attempting reconnect after error.");
             this._cleanForReconnect();
+            this.backoff.reset();
+
             setTimeout(() => {
-                this.connect();
-                this.startRequest();
+                this.connect().then(this.startRequest, (err) => {
+                    if (this.handlers.onReconnectFail && typeof this.handlers.onReconnectFail === "function") {
+                        this.handlers.onReconnectFail(err);
+                    }
+                });
             }, 3000);
         } else {
             logger.debug("WebSocket Closed.");
@@ -234,20 +239,28 @@ export default class RealtimeApi {
 
     connect (onConnectCallback) {
 
-        logger.debug("WebSocket Connecting.");
-        if (this.webSocketStatus !== webSocketConnectionStatus.connected) {
-            this.webSocketStatus = webSocketConnectionStatus.connecting;
-            this.onConnectCallback = onConnectCallback;
-
-            this.webSocket = new WebSocket({
-                "accessToken": this.oauth2.activeToken,
-                "onClose": this.onCloseWebSocket,
-                "onConnect": this.onConnectWebSocket,
-                "onError": this.onErrorWebSocket,
-                "onMessage": this.onMessageWebSocket,
-                "url": this.webSocketUrl
-            });
-        }
+        return new Promise((resolve, reject) => {
+            if (this.webSocketStatus !== webSocketConnectionStatus.connected) {
+                logger.debug("WebSocket Connecting.");
+                if (this.webSocketStatus !== webSocketConnectionStatus.connecting) {
+                    this.webSocketStatus = webSocketConnectionStatus.connecting;
+                }
+                this.onConnectCallback = onConnectCallback;
+                this.webSocket = new WebSocket({
+                    "accessToken": this.oauth2.activeToken,
+                    "onClose": this.onCloseWebSocket,
+                    "onConnect": this.onConnectWebSocket,
+                    "onError": this.onErrorWebSocket,
+                    "onMessage": this.onMessageWebSocket,
+                    "url": this.webSocketUrl
+                });
+                this.backoff.run(this.connect).catch(() => {
+                    reject('Too many retries attempted. Try again later.');
+                });
+            } else if (this.webSocketStatus === webSocketConnectionStatus.connected) {
+                resolve();
+            }
+        });
 
     }
 
@@ -419,7 +432,7 @@ export default class RealtimeApi {
     startRequest () {
 
         return new Promise((resolve, reject) => {
-
+            this.backoff.reset();
             if (this.webSocketStatus === webSocketConnectionStatus.connected) {
 
                 this.sendStart(

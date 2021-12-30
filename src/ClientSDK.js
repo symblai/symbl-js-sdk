@@ -428,11 +428,19 @@ export default class ClientSDK {
 
     }
 
-    subscribeToConnection (connectionId, callback) {
-
+    subscribeToConnection (connectionId, options) {
+        // For backwards compatability. 2nd param was previously
+        // a callback function.
+        if (typeof options === "function") {
+            options = {
+                handlers: {
+                    onMessage: options
+                }
+            }
+        }
         const sessionApi = new SessionApi(
             {
-                callback,
+                options,
                 "id": connectionId,
                 "basePath": this.basePath,
                 "isStreaming": false
@@ -443,11 +451,19 @@ export default class ClientSDK {
 
     }
 
-    subscribeToStream (connectionId, callback) {
-
+    subscribeToStream (connectionId, options) {
+        // For backwards compatability. 2nd param was previously
+        // a callback function.
+        if (typeof options === "function") {
+            options = {
+                handlers: {
+                    onMessage: options
+                }
+            }
+        }
         const sessionApi = new SessionApi(
             {
-                callback,
+                options,
                 "id": connectionId,
                 "basePath": this.basePath,
                 "isStreaming": true
