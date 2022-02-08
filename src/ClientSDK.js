@@ -111,7 +111,7 @@ export default class ClientSDK {
         return new Promise((resolve, reject) => {
             let retryCount = 0;
 
-            const retry = () => {
+            const retry = async () => {
                 if (retryCount < 4) {
                     logger.info(
                         "Retry attempt: ",
@@ -120,6 +120,7 @@ export default class ClientSDK {
                     );
 
                     if (this.oauth2 && this.oauth2.activeToken) {
+                        await this.oauth2.refreshAuthToken();
                         realtimeClient.connect(async (err) => {
                             if (err) {
                                 reject(err);
@@ -245,7 +246,7 @@ export default class ClientSDK {
 
             let retryCount = 0;
 
-            const retry = () => {
+            const retry = async () => {
 
                 if (retryCount < 4) {
 
@@ -254,7 +255,9 @@ export default class ClientSDK {
                         retryCount,
                         this.oauth2
                     );
+
                     if (this.oauth2 && this.oauth2.activeToken) {
+                        await this.oauth2.refreshAuthToken();
 
                         realtimeClient.connect();
                         startRequest(
@@ -333,8 +336,8 @@ export default class ClientSDK {
 
         }
 
-        return new Promise((resolve, reject) => {
-
+        return new Promise(async (resolve, reject) => {
+            await this.oauth2.refreshAuthToken();
             this.endpointClient.startEndpoint({endpoint,
                 validationToken,
                 actions,
@@ -372,7 +375,7 @@ export default class ClientSDK {
     }
 
     async stopEndpoint (options) {
-
+        await this.oauth2.refreshAuthToken();
         if (!options) {
 
             throw new Error("options must be provided.");
@@ -434,7 +437,7 @@ export default class ClientSDK {
 
     }
 
-    subscribeToConnection (connectionId, options) {
+    async subscribeToConnection (connectionId, options) {
         // For backwards compatability. 2nd param was previously
         // a callback function.
         if (typeof options === "function") {
@@ -453,11 +456,12 @@ export default class ClientSDK {
             },
             this.oauth2
         );
+        await this.oauth2.refreshAuthToken();
         sessionApi.connect();
 
     }
 
-    subscribeToStream (connectionId, options) {
+    async subscribeToStream (connectionId, options) {
         // For backwards compatability. 2nd param was previously
         // a callback function.
         if (typeof options === "function") {
@@ -476,6 +480,7 @@ export default class ClientSDK {
             },
             this.oauth2
         );
+        await this.oauth2.refreshAuthToken();
         sessionApi.connect();
 
     }

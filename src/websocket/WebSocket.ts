@@ -16,6 +16,7 @@ export default class WebSocket {
     isConnected: boolean;
     pongTimeoutRef: any;
     pingIntervalRef: any;
+    logEntries: any[];
 
     constructor(options: any = {}) {
         if (!options.url) {
@@ -29,6 +30,7 @@ export default class WebSocket {
         this.isConnected = false;
         this.pongTimeoutRef = null;
         this.pingIntervalRef = null;
+        this.logEntries = [];
 
         this.connect = this.connect.bind(this);
         this.onConnect = this.onConnect.bind(this);
@@ -43,6 +45,7 @@ export default class WebSocket {
 
         this.clearPongTimeout = this.clearPongTimeout.bind(this);
         this.clearPingInterval = this.clearPingInterval.bind(this);
+        this.logRecurring = this.logRecurring.bind(this);
 
         this.connect();
     }
@@ -116,9 +119,11 @@ export default class WebSocket {
         this.isConnected = true;
         this.webSocketConnection = connection;
 
-        this.pingIntervalRef = setInterval(() => {
-            this.ping();
-        }, PING_INTERVAL_MS);
+        if (this.options.reconnectOnError) {
+            this.pingIntervalRef = setInterval(() => {
+                this.ping();
+            }, PING_INTERVAL_MS);
+        }
 
         this.options['onConnectSuccess'] ? this.options['onConnectSuccess'](connection) : logger.info('Connection established successfully');
         this.options['onConnect'] ? this.options['onConnect'](connection) : logger.info('Connection established.');
@@ -138,6 +143,32 @@ export default class WebSocket {
         this.webSocket.onopen = this.onConnect;
     }
 
+    logRecurring (message, severity = "info") {
+        if (!this.logEntries[message]) {
+            this.logEntries[message] = message;
+
+            switch (severity) {
+            case "warn":
+                logger.warn(message);
+                break;
+            case "error":
+                logger.error(message);
+                break;
+            case "debug":
+                logger.debug(message);
+                break;
+            case "info":
+            default:
+                logger.info(message);
+                break;
+            }
+
+            setTimeout(() => {
+                delete this.logEntries[message];
+            }, 5000);
+        }
+    }
+
     send(data, cb): void {
         if (!data) {
             cb && cb({
@@ -148,8 +179,7 @@ export default class WebSocket {
                 if (this.webSocket.readyState === 1) {
                     this.webSocket.send(data);
                 } else {
-                    logger.warn('WebSocket Connection not open. Couldn\'t send data.');
-                    // this.onError({});
+                    this.logRecurring("WebSocket Connection not open. Couldn't send data.", "warn");
                 }
             } catch(e) {
                 logger.error('Error while sending the data.', e);

@@ -218,6 +218,7 @@ export default class RealtimeApi {
 
     async reConnect() {
         try {
+            await this.oauth2.refreshAuthToken();
             this.backoff.reset();
 
             if (!RealtimeApi.isOffline) {
@@ -332,6 +333,7 @@ export default class RealtimeApi {
                     "onConnectSuccess": resolve,
                     "onConnectFailure": reject,
                     "onForceClose": this.onForceClose,
+                    "reconnectOnError": this.options.reconnectOnError,
                     referenceId
                 });
             } else if (this.webSocketStatus === webSocketConnectionStatus.connected) {
