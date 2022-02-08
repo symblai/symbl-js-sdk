@@ -24,6 +24,12 @@ export default class ClientSDK {
 
     }
 
+    // eslint-disable-next-line class-methods-use-this
+    setOffline (isOffline = false) {
+        // Add more offline/reconnection states here
+        RealtimeApi.isOffline = isOffline;
+    }
+
     async init (options) {
 
         if (!options) {

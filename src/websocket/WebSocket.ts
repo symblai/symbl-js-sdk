@@ -2,12 +2,20 @@ import {w3cwebsocket as W3CWebSocket} from 'websocket';
 import logger from "../logger/Logger";
 import ErrorHandler from "../api/ErrorHandler";
 
+const PING = "__PING__";
+const PONG = "__PONG__";
+const PONG_TIMEOUT_MS = 4500;
+const PING_INTERVAL_MS = 5000;
+
 export default class WebSocket {
     url: string;
     accessToken: string;
     options: any;
     webSocket: any;
     webSocketConnection: any;
+    isConnected: boolean;
+    pongTimeoutRef: any;
+    pingIntervalRef: any;
 
     constructor(options: any = {}) {
         if (!options.url) {
@@ -18,6 +26,9 @@ export default class WebSocket {
         this.accessToken = options.accessToken;
 
         this.options = options;
+        this.isConnected = false;
+        this.pongTimeoutRef = null;
+        this.pingIntervalRef = null;
 
         this.connect = this.connect.bind(this);
         this.onConnect = this.onConnect.bind(this);
@@ -27,30 +38,89 @@ export default class WebSocket {
 
         this.send = this.send.bind(this);
         this.disconnect = this.disconnect.bind(this);
+        this.pongTimeout = this.pongTimeout.bind(this);
+        this.ping = this.ping.bind(this);
+
+        this.clearPongTimeout = this.clearPongTimeout.bind(this);
+        this.clearPingInterval = this.clearPingInterval.bind(this);
 
         this.connect();
     }
 
+    ping(): void {
+        if (this.webSocket.readyState === 1) {
+            this.send(PING, null);
+            this.pongTimeoutRef = setTimeout(() => {
+                this.pongTimeout();
+            }, PONG_TIMEOUT_MS);
+        }
+    }
+
+    pongTimeout(): void {
+        logger.warn(`PONG failed to receive in ${PONG_TIMEOUT_MS}ms, closing WebSocket connection`);
+        this.clearPongTimeout();
+
+        this.options.onForceClose && this.options.onForceClose(this.options.referenceId);
+
+        this.webSocket.close(3006, "Connection closure due to failure in receiving pong within configured threshold");
+    }
+
+    clearPongTimeout(): void {
+        if (this.pongTimeoutRef) {
+            clearTimeout(this.pongTimeoutRef);
+        }
+    }
+
+    clearPingInterval(): void {
+        if (this.pingIntervalRef) {
+            clearInterval(this.pingIntervalRef);
+        }
+    }
+
     onError(err): void {
+        if (!this.isConnected) {
+            logger.error(`Failed to establish the initial handshake: ${err && err.message}`, err);
+            return;
+        }
+
+        this.clearPingInterval();
+        this.clearPongTimeout();
+
         this.options['onError'] ? this.options['onError'](err) : () => logger.error(err);
     }
 
     onMessage(payload): void {
         // Incoming results for this connection
         const data = payload.data;
+        if (data === PONG) {
+            this.clearPongTimeout();
+            return;
+        }
+
         this.options['onMessage'] ? this.options['onMessage'](data) : () => logger.debug(data);
     }
 
     onClose(event): void {
+        if (!this.isConnected && event && event.code === 1006 && event.reason === 'connection failed') {
+            this.options['onConnectFailure'] ? this.options['onConnectFailure'](event) : logger.error(`Initial handshake for the connection failed: ${event.code} -- ${event.reason}`, event);
+            return;
+        }
+
+        this.clearPingInterval();
+        this.clearPongTimeout();
+
         this.options['onClose'] ? this.options['onClose'](event) : () => logger.info('Connection Closed.');
     }
 
     onConnect(connection: any): void {
+        this.isConnected = true;
         this.webSocketConnection = connection;
-        this.webSocket.onerror = this.onError;
-        this.webSocket.onmessage = this.onMessage;
-        this.webSocket.onclose = this.onClose;
 
+        this.pingIntervalRef = setInterval(() => {
+            this.ping();
+        }, PING_INTERVAL_MS);
+
+        this.options['onConnectSuccess'] ? this.options['onConnectSuccess'](connection) : logger.info('Connection established successfully');
         this.options['onConnect'] ? this.options['onConnect'](connection) : logger.info('Connection established.');
     }
 
@@ -62,6 +132,9 @@ export default class WebSocket {
 
         this.webSocket.binaryType = 'arraybuffer';
         // TODO: Support for token in url
+        this.webSocket.onerror = this.onError;
+        this.webSocket.onmessage = this.onMessage;
+        this.webSocket.onclose = this.onClose;
         this.webSocket.onopen = this.onConnect;
     }
 
@@ -75,16 +148,19 @@ export default class WebSocket {
                 if (this.webSocket.readyState === 1) {
                     this.webSocket.send(data);
                 } else {
-                    console.warn('WebSocket Connection not open. Couldn\'t send data.');
+                    logger.warn('WebSocket Connection not open. Couldn\'t send data.');
                     // this.onError({});
                 }
             } catch(e) {
-                console.error('Error while sending the data.', e);
+                logger.error('Error while sending the data.', e);
             }
         }
     }
 
     disconnect(): void {
+        this.clearPingInterval();
+        this.clearPongTimeout();
+
         this.webSocket.close();
     }
 
