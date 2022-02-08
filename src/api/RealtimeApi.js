@@ -113,7 +113,6 @@ export default class RealtimeApi {
     onErrorWebSocket (err) {
 
         this.webSocketStatus = webSocketConnectionStatus.error;
-        this._cleanForReconnect();
 
         logger.error(err);
 
