@@ -27,6 +27,8 @@ const webSocketConnectionStatus = {
 export default class RealtimeApi {
 
     // eslint-disable-next-line default-param-last
+    static isOffline = false;
+
     constructor (options = {}, oauth2, usePreviousGenerationResponses = false, handlers = {}) {
 
         let basePath = options.basePath || Config.basePath;
@@ -71,11 +73,16 @@ export default class RealtimeApi {
         this.webSocketUrl = `${uri}/${this.id}`;
         this.options = options;
 
+        this.referenceIds = [uuid()];
+
         this.connect = this.connect.bind(this);
+        this._connect = this._connect.bind(this);
+        this.reConnect = this.reConnect.bind(this);
         this.onConnectWebSocket = this.onConnectWebSocket.bind(this);
         this.onErrorWebSocket = this.onErrorWebSocket.bind(this);
         this.onMessageWebSocket = this.onMessageWebSocket.bind(this);
         this.onCloseWebSocket = this.onCloseWebSocket.bind(this);
+        this.onForceClose = this.onForceClose.bind(this);
 
         this.onStartedListening = this.onStartedListening.bind(this);
         this.onSpeechDetected = this.onSpeechDetected.bind(this);
@@ -89,6 +96,7 @@ export default class RealtimeApi {
 
         this.sendAudio = this.sendAudio.bind(this);
         this.sendStart = this.sendStart.bind(this);
+        this.startRequest = this.startRequest.bind(this);
 
         this.oauth2 = oauth2;
         this.handlers = { ...(this.options.handlers || {}), ...handlers };
@@ -105,6 +113,7 @@ export default class RealtimeApi {
     onErrorWebSocket (err) {
 
         this.webSocketStatus = webSocketConnectionStatus.error;
+
         logger.error(err);
 
         if (this.onConnectCallback) {
@@ -196,29 +205,95 @@ export default class RealtimeApi {
 
     }
 
-    onCloseWebSocket (event) {
-        this.webSocketStatus = webSocketConnectionStatus.closed;
-        if (this.options.reconnectOnError && event.wasClean === false) {
-            logger.debug("Attempting reconnect after error.");
-            this._cleanForReconnect();
+    async connect (onConnectCallback) {
+        try {
+            await this.backoff.run(this._connect, this, [onConnectCallback, this.referenceIds[this.referenceIds.length - 1]], true);
+        } catch (e) {
+            logger.error(`Exception caught while retrying to connect: ${e && e.message}`, e);
+            if (this.handlers.onReconnectFail && typeof this.handlers.onReconnectFail === "function") {
+                this.handlers.onReconnectFail(e);
+            }
+        }
+    }
+
+    async reConnect() {
+        try {
+            await this.oauth2.refreshAuthToken();
             this.backoff.reset();
 
-            setTimeout(() => {
-                this.connect().then(this.startRequest, (err) => {
-                    if (this.handlers.onReconnectFail && typeof this.handlers.onReconnectFail === "function") {
-                        this.handlers.onReconnectFail(err);
+            if (!RealtimeApi.isOffline) {
+                this.referenceIds.push(uuid());
+                this.connect().then(() => {
+                    if (this.requestStarted) {
+                        this.startRequest();
                     }
                 });
-            }, 3000);
-        } else {
-            logger.debug("WebSocket Closed.");
+            } else {
+                let maxReconnectionAttempts = 900;
+                let reconnectionIntervalRef = setInterval(() => {
+                    if (!RealtimeApi.isOffline) {
+                        clearInterval(reconnectionIntervalRef);
+                        this.reConnect();
+                    } else if (maxReconnectionAttempts > 0) {
+                        maxReconnectionAttempts -= 1;
+                    } else {
+                        clearInterval(reconnectionIntervalRef);
+                        const errorMessage = `Max attempts to reconnect exceeded! Not attempting reconnection`;
+                        logger.error(errorMessage);
+                        if (this.handlers.onReconnectFail && typeof this.handlers.onReconnectFail === "function") {
+                            this.handlers.onReconnectFail(new Error(errorMessage));
+                        }
+                    }
+                }, 2000);
+            }
+        } catch (e) {
+            logger.error(`Exception caught while reconnecting: ${e && e.message}`, e);
         }
-        if (this.handlers && this.handlers.onClose) {
-            setImmediate(() => {
+    }
 
-                this.handlers.onClose(event);
+    onForceClose (referenceId) {
+        this.webSocketStatus = webSocketConnectionStatus.closed;
+        logger.info(`Force closed WebSocket due to network issues -- Attempting to reconnect`);
 
-            });
+        if (this.options.reconnectOnError) {
+            if (this.referenceIds.includes(referenceId)) {
+                logger.debug("Attempting reconnect after error.");
+                this.referenceIds.splice(this.referenceIds.indexOf(referenceId), 1);
+
+                this.reConnect();
+            } else {
+                logger.debug(`Reconnection already handled for socket with connectionId: ${this.id}`);
+            }
+        } else {
+            logger.debug(`Reconnection not enabled for socket with connectionId: ${this.id}`);
+        }
+    }
+
+    onCloseWebSocket (referenceId) {
+        return (event) => {
+            this.webSocketStatus = webSocketConnectionStatus.closed;
+            console.info(`WebSocket connection closed`, event);
+
+            if (this.options.reconnectOnError && (event.wasClean === false || event.code === 1005 || event.code === 3006)) {
+                if (this.referenceIds.includes(referenceId)) {
+                    logger.debug("Attempting reconnect after error.");
+                    this.referenceIds.splice(this.referenceIds.indexOf(referenceId), 1);
+
+                    this.reConnect();
+                } else {
+                    logger.debug(`Reconnection already handled for socket with connectionId: ${this.id}`);
+                }
+            } else {
+                logger.debug("WebSocket Closed.");
+
+                if (this.handlers && this.handlers.onClose) {
+                    setImmediate(() => {
+
+                        this.handlers.onClose(event);
+
+                    });
+                }
+            }
         }
     }
 
@@ -237,7 +312,7 @@ export default class RealtimeApi {
         }
     }
 
-    connect (onConnectCallback) {
+    _connect (onConnectCallback, referenceId) {
 
         return new Promise((resolve, reject) => {
             if (this.webSocketStatus !== webSocketConnectionStatus.connected) {
@@ -245,17 +320,21 @@ export default class RealtimeApi {
                 if (this.webSocketStatus !== webSocketConnectionStatus.connecting) {
                     this.webSocketStatus = webSocketConnectionStatus.connecting;
                 }
+
                 this.onConnectCallback = onConnectCallback;
+
                 this.webSocket = new WebSocket({
                     "accessToken": this.oauth2.activeToken,
-                    "onClose": this.onCloseWebSocket,
+                    "onClose": this.onCloseWebSocket(referenceId),
                     "onConnect": this.onConnectWebSocket,
                     "onError": this.onErrorWebSocket,
                     "onMessage": this.onMessageWebSocket,
-                    "url": this.webSocketUrl
-                });
-                this.backoff.run(this.connect).catch(() => {
-                    reject('Too many retries attempted. Try again later.');
+                    "url": this.webSocketUrl,
+                    "onConnectSuccess": resolve,
+                    "onConnectFailure": reject,
+                    "onForceClose": this.onForceClose,
+                    "reconnectOnError": this.options.reconnectOnError,
+                    referenceId
                 });
             } else if (this.webSocketStatus === webSocketConnectionStatus.connected) {
                 resolve();
@@ -464,7 +543,7 @@ export default class RealtimeApi {
 
                         } else {
                             try {
-                                this.backoff.run(retry.bind(this));
+                                this.backoff.run(retry.bind(this), this);
                             } catch (e) {
                                 reject('Too many retries attempted. Try again later.');
                             }
@@ -476,12 +555,12 @@ export default class RealtimeApi {
                     this.retryCount += 1;
 
                 };
-                
+
                 try {
                     setTimeout(async () => {
                         await retry();
-                        await this.backoff.run(retry.bind(this));
-                    }, 500)
+                        await this.backoff.run(retry.bind(this), this);
+                    }, 500);
                 } catch (e) {
                     reject('Too many retries attempted. Try again later.');
                 }
@@ -510,15 +589,15 @@ export default class RealtimeApi {
                     "type": "stop_request"
                 }));
 
-                if (this.options.disconnectOnStopRequest === false) {
-                    this._cleanForReconnect();
-                }
             } else {
                 // eslint-disable-next-line max-len
                 logger.warn("WebSocket connection is not connected. No stop request sent.");
                 resolve();
             }
 
+            if (this.options.disconnectOnStopRequest === false) {
+                this._cleanForReconnect();
+            }
         });
 
     }

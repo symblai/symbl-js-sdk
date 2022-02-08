@@ -1,5 +1,5 @@
+import * as log from "loglevel";
 import isNode from "detect-node";
-import LogLevel from "loglevel";
 
 declare let window: any; // eslint-disable-line
 
@@ -13,7 +13,7 @@ declare let window: any; // eslint-disable-line
  */
 export class Logger {
 
-    logger: typeof LogLevel;
+    logger: typeof log;
 
     constructor () {
 
@@ -37,7 +37,7 @@ export class Logger {
 
             } else {
 
-                this.logger = LogLevel;
+                this.logger = log;
                 global.clientSdkLogger = this.logger;
 
             }
@@ -50,14 +50,14 @@ export class Logger {
 
             } else {
 
-                this.logger = LogLevel;
+                this.logger = log;
                 window.clientSdkLogger = this.logger;
 
             }
 
         } else {
 
-            this.logger = LogLevel;
+            this.logger = log;
 
         }
 
@@ -67,11 +67,11 @@ export class Logger {
      * Sets the logging level.
      * @param {string} level - logging level
      */
-    setLevel (...args: unknown[]): void {
+    setLevel (level): void {
 
         this.logger.setLevel.apply(
             null,
-            args
+            [level]
         );
 
     }
@@ -93,11 +93,11 @@ export class Logger {
      * Sets the default logging level.
      * @param {string} level - logging level
      */
-    setDefaultLevel (...args: unknown[]): void {
+    setDefaultLevel (level): void {
 
         this.logger.setDefaultLevel.apply(
             null,
-            args
+            [level]
         );
 
     }
@@ -107,11 +107,11 @@ export class Logger {
      * taken to reach the point of the value
      * @param {string} value
      */
-    trace (...args: unknown[]): void {
+    trace (msg, meta = {}): void {
 
         this.logger.trace.apply(
             null,
-            args
+            [msg, meta]
         );
 
     }
@@ -119,11 +119,11 @@ export class Logger {
     /**
      * Outputs a debug level logging message
      */
-    debug (...args: unknown[]): void {
+    debug (msg, meta = {}): void {
 
         this.logger.debug.apply(
             null,
-            args
+            [msg, meta]
         );
 
     }
@@ -131,11 +131,11 @@ export class Logger {
     /**
      * Outputs a basic log level logging message
      */
-    log (...args: unknown[]): void {
+    log (msg, meta = {}): void {
 
         this.logger.log.apply(
             null,
-            args
+            [msg, meta]
         );
 
     }
@@ -143,11 +143,11 @@ export class Logger {
     /**
      * Outputs an informational logging message
      */
-    info (...args: unknown[]): void {
+    info (msg, meta = {}): void {
 
         this.logger.info.apply(
             null,
-            args
+            [msg, meta]
         );
 
     }
@@ -155,11 +155,11 @@ export class Logger {
     /**
      * Outputs a warn level logging message
      */
-    warn (...args: unknown[]): void {
+    warn (msg, meta = {}): void {
 
         this.logger.warn.apply(
             null,
-            args
+            [msg, meta]
         );
 
     }
@@ -167,11 +167,11 @@ export class Logger {
     /**
      * Outputs an error level logging message
      */
-    error (...args: unknown[]): void {
+    error (msg, meta = {}): void {
 
         this.logger.error.apply(
             null,
-            args
+            [msg, meta]
         );
 
     }
