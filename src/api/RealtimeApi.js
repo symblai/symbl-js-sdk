@@ -218,10 +218,11 @@ export default class RealtimeApi {
 
     async reConnect() {
         try {
-            await this.oauth2.refreshAuthToken();
             this.backoff.reset();
 
             if (!RealtimeApi.isOffline) {
+                await this.oauth2.refreshAuthToken();
+
                 this.referenceIds.push(uuid());
                 this.connect().then(() => {
                     if (this.requestStarted) {
