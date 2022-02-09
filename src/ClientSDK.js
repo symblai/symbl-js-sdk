@@ -28,6 +28,7 @@ export default class ClientSDK {
     setOffline (isOffline = false) {
         // Add more offline/reconnection states here
         RealtimeApi.isOffline = isOffline;
+        SessionApi.isOffline = isOffline;
     }
 
     async init (options) {
@@ -457,7 +458,7 @@ export default class ClientSDK {
             this.oauth2
         );
         await this.oauth2.refreshAuthToken();
-        sessionApi.connect();
+        return sessionApi.connect();
 
     }
 
@@ -481,8 +482,7 @@ export default class ClientSDK {
             this.oauth2
         );
         await this.oauth2.refreshAuthToken();
-        sessionApi.connect();
-
+        return sessionApi.connect();
     }
 
     async pushEventOnConnection (connectionId, event, callback) {
