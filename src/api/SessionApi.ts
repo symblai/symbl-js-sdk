@@ -229,7 +229,7 @@ export default class SessionApi {
                     "url": this.webSocketUrl,
                     "accessToken": this.oauth2.activeToken,
                     "onError": this.onErrorWebSocket,
-                    "onClose": this.onCloseWebSocket,
+                    "onClose": this.onCloseWebSocket(referenceId),
                     "onMessage": this.onMessageWebSocket,
                     "onConnect": this.onConnectWebSocket,
                     "onConnectSuccess": resolve,
