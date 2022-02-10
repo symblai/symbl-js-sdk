@@ -61,7 +61,7 @@ const handleMicEvent = (setMuted, setMuting, setCaption) => {
                     "You're unmuted. Live captions will appear here..."
                 );
             } else {
-                
+
                 symbl.mute(stream);
                 window.connectionActive = false;
 
@@ -127,6 +127,7 @@ function App() {
                 name: process.env.FULL_NAME || "Tanaka",
             },
             handlers,
+            reconnectOnError: true
         }, true);
 
         return stream;
@@ -189,7 +190,7 @@ function App() {
 
                         if (renderViaSubscription) setCaption(transcript);
                     }
-                });
+                }, true);
 
                 setSubscribing(false);
                 setSubscribed(true);
@@ -305,7 +306,7 @@ function App() {
                                 label={renderViaSubscription ? "Subscribed" : "Not Subscribed"}
                             />
                         </FormGroup>
-                        
+
                     </Stack>
                     <Stack spacing={2} direction="row">
                         <Box
