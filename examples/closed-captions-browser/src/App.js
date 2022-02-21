@@ -27,7 +27,7 @@ import symbl from "@symblai/symbl-web-sdk";
 
 import { v4 } from "uuid";
 
-let stream;
+let stream, subscribedStream;
 
 let connectionId;
 
@@ -146,7 +146,7 @@ function App() {
             setRenderViaSubscription(event.target.checked);
 
             if (!subscribed) {
-                await symbl.subscribeToStream(connectionId, (data) => {
+                subscribedStream = await symbl.subscribeToStream(connectionId, (data) => {
 
                     const { type } = data;
 
@@ -195,8 +195,10 @@ function App() {
                 setSubscribing(false);
                 setSubscribed(true);
             } else {
-                console.log("Already subscribed");
+                console.log("Already subscribed, closing stream", subscribedStream);
                 setSubscribing(false);
+                subscribedStream.close();
+                setSubscribed(false);
             }
         } else {
             console.log("Subscription in progress...");
@@ -235,9 +237,14 @@ function App() {
                     await symbl.stopRequest(stream);
                 }
 
+                if (subscribedStream) {
+                    await subscribedStream.close();
+                }
+
                 setStarted(false);
                 setMuted(true);
                 setRenderViaSubscription(false);
+                setSubscribed(false);
 
                 setCaption(
                     "Hit the Play button to connect! Captions will appear here"

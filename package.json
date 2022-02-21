@@ -1,6 +1,6 @@
 {
   "name": "@symblai/symbl-js",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "description": "Javascript SDK for Symbl.ai's Language Insights API Platform",
   "main": "build/app.bundle.js",
   "dependencies": {

@@ -29,6 +29,12 @@ export default class RealtimeApi {
     // eslint-disable-next-line default-param-last
     static isOffline = false;
 
+    static networkConnectivityDispatcher;
+
+    static setNetworkConnectivityDispatcher (networkConnectivityDispatcher) {
+        RealtimeApi.networkConnectivityDispatcher = networkConnectivityDispatcher;
+    }
+
     constructor (options = {}, oauth2, usePreviousGenerationResponses = false, handlers = {}) {
 
         let basePath = options.basePath || Config.basePath;
@@ -216,15 +222,21 @@ export default class RealtimeApi {
         }
     }
 
-    async reConnect() {
+    async reConnect(reCheckNetworkConnectivity = false) {
         try {
             this.backoff.reset();
+
+            if (reCheckNetworkConnectivity && RealtimeApi.networkConnectivityDispatcher) {
+                logger.info('Rechecking network connectivity');
+                RealtimeApi.isOffline = true;
+                RealtimeApi.networkConnectivityDispatcher.forceCheckNetworkConnectivity();
+            }
 
             if (!RealtimeApi.isOffline) {
                 await this.oauth2.refreshAuthToken();
 
                 this.referenceIds.push(uuid());
-                this.connect().then(() => {
+                this.connect(this.onConnectCallback).then(() => {
                     if (this.requestStarted) {
                         this.startRequest();
                     }
@@ -261,7 +273,7 @@ export default class RealtimeApi {
                 logger.debug("Attempting reconnect after error.");
                 this.referenceIds.splice(this.referenceIds.indexOf(referenceId), 1);
 
-                this.reConnect();
+                this.reConnect(true);
             } else {
                 logger.debug(`Reconnection already handled for socket with connectionId: ${this.id}`);
             }
@@ -273,14 +285,14 @@ export default class RealtimeApi {
     onCloseWebSocket (referenceId) {
         return (event) => {
             this.webSocketStatus = webSocketConnectionStatus.closed;
-            console.info(`WebSocket connection closed`, event);
+            logger.info(`WebSocket connection closed`, event);
 
             if (this.options.reconnectOnError && (event.wasClean === false || event.code === 1005 || event.code === 3006)) {
                 if (this.referenceIds.includes(referenceId)) {
                     logger.debug("Attempting reconnect after error.");
                     this.referenceIds.splice(this.referenceIds.indexOf(referenceId), 1);
 
-                    this.reConnect();
+                    this.reConnect(event.handshakeFailed);
                 } else {
                     logger.debug(`Reconnection already handled for socket with connectionId: ${this.id}`);
                 }
@@ -307,6 +319,7 @@ export default class RealtimeApi {
             logger.debug(`Invoking this.onConnectCallback`, typeof this.onConnectCallback);
             if (typeof this.onConnectCallback === 'function') {
                 this.onConnectCallback(null);
+                this.onConnectCallback = null;
             } else {
                 logger.warn("onConnectCallback is not a function");
             }
@@ -315,14 +328,15 @@ export default class RealtimeApi {
 
     _connect (onConnectCallback, referenceId) {
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             if (this.webSocketStatus !== webSocketConnectionStatus.connected) {
                 logger.debug("WebSocket Connecting.");
                 if (this.webSocketStatus !== webSocketConnectionStatus.connecting) {
                     this.webSocketStatus = webSocketConnectionStatus.connecting;
                 }
 
-                this.onConnectCallback = onConnectCallback;
+                if (onConnectCallback)
+                    this.onConnectCallback = onConnectCallback;
 
                 this.webSocket = new WebSocket({
                     "accessToken": this.oauth2.activeToken,
@@ -332,7 +346,6 @@ export default class RealtimeApi {
                     "onMessage": this.onMessageWebSocket,
                     "url": this.webSocketUrl,
                     "onConnectSuccess": resolve,
-                    "onConnectFailure": reject,
                     "onForceClose": this.onForceClose,
                     "reconnectOnError": this.options.reconnectOnError,
                     referenceId

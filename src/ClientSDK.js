@@ -31,6 +31,14 @@ export default class ClientSDK {
         SessionApi.isOffline = isOffline;
     }
 
+    // eslint-disable-next-line class-methods-use-this
+    setNetworkConnectivityDispatcher (networkConnectivityDispatcher) {
+        if (networkConnectivityDispatcher && networkConnectivityDispatcher.hasOwnProperty("forceCheckNetworkConnectivity")) {
+            RealtimeApi.setNetworkConnectivityDispatcher(networkConnectivityDispatcher);
+            SessionApi.setNetworkConnectivityDispatcher(networkConnectivityDispatcher);
+        }
+    }
+
     async init (options) {
 
         if (!options) {
@@ -102,7 +110,7 @@ export default class ClientSDK {
         let realtimeClient = this.cache.get(options.id);
         if (!realtimeClient) {
             realtimeClient = new RealtimeApi(options, this.oauth2, false, {
-                _onClose: () => {
+                onClose: () => {
                     this.cache.remove(options.id);
                 }
             });
@@ -481,8 +489,17 @@ export default class ClientSDK {
             },
             this.oauth2
         );
+
         await this.oauth2.refreshAuthToken();
-        return sessionApi.connect();
+        await new Promise((resolve) => {
+            sessionApi.connect(resolve);
+        });
+
+        return {
+            close: () => {
+                return sessionApi.disconnect();
+            }
+        };
     }
 
     async pushEventOnConnection (connectionId, event, callback) {

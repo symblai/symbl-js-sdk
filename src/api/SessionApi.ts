@@ -42,7 +42,15 @@ export default class SessionApi {
 
     referenceIds: any[];
 
+    onConnectCallback: () => void;
+
     static isOffline = false;
+
+    static networkConnectivityDispatcher;
+
+    static setNetworkConnectivityDispatcher (networkConnectivityDispatcher) {
+        SessionApi.networkConnectivityDispatcher = networkConnectivityDispatcher;
+    }
 
     constructor (options: SessionOptions, oauth2: OAuth2Object) {
 
@@ -107,15 +115,21 @@ export default class SessionApi {
         this.onForceClose = this.onForceClose.bind(this);
     }
 
-    async reConnect() {
+    async reConnect(reCheckNetworkConnectivity = false) {
         try {
             this.backoff.reset();
+
+            if (reCheckNetworkConnectivity && SessionApi.networkConnectivityDispatcher) {
+                logger.info('Rechecking network connectivity');
+                SessionApi.isOffline = true;
+                SessionApi.networkConnectivityDispatcher.forceCheckNetworkConnectivity();
+            }
 
             if (!SessionApi.isOffline) {
                 await this.oauth2.refreshAuthToken();
 
                 this.referenceIds.push(uuid());
-                this.connect();
+                this.connect(this.onConnectCallback);
             } else {
                 let maxReconnectionAttempts = 900;
                 const reconnectionIntervalRef = setInterval(() => {
@@ -148,7 +162,7 @@ export default class SessionApi {
                 logger.debug("Attempting reconnect after error.");
                 this.referenceIds.splice(this.referenceIds.indexOf(referenceId), 1);
 
-                this.reConnect();
+                this.reConnect(true);
             } else {
                 logger.debug(`Reconnection already handled for socket with connectionId: ${this.id}`);
             }
@@ -160,14 +174,14 @@ export default class SessionApi {
     onCloseWebSocket (referenceId) {
         return (event) => {
             this.webSocketStatus = webSocketConnectionStatus.closed;
-            console.info(`WebSocket connection closed`, event);
+            logger.info(`WebSocket connection closed`, event);
 
             if (this.connectionOptions.reconnectOnError && (event.wasClean === false || event.code === 1005 || event.code === 3006)) {
                 if (this.referenceIds.includes(referenceId)) {
                     logger.debug("Attempting reconnect after error.");
                     this.referenceIds.splice(this.referenceIds.indexOf(referenceId), 1);
 
-                    this.reConnect();
+                    this.reConnect(event.handshakeFailed);
                 } else {
                     logger.debug(`Reconnection already handled for socket with connectionId: ${this.id}`);
                 }
@@ -188,6 +202,11 @@ export default class SessionApi {
 
         logger.debug("WebSocket Connected.");
         this.webSocketStatus = webSocketConnectionStatus.connected;
+
+        if (this.onConnectCallback && typeof this.onConnectCallback === "function") {
+            this.onConnectCallback();
+            this.onConnectCallback = null;
+        }
 
         if (this.connectionOptions.handlers.onSubscribe && typeof this.connectionOptions.handlers.onSubscribe === "function") {
             this.connectionOptions.handlers.onSubscribe();
@@ -218,14 +237,19 @@ export default class SessionApi {
 
     }
 
-    _connect (referenceId): Promise<void> {
+    _connect (onConnectCallback, referenceId): Promise<void> {
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             if (this.webSocketStatus !== webSocketConnectionStatus.connected) {
                 logger.debug(`WebSocket Connecting on: ${this.webSocketUrl}`);
                 if (this.webSocketStatus !== webSocketConnectionStatus.connecting) {
                     this.webSocketStatus = webSocketConnectionStatus.connecting;
                 }
+
+                if (onConnectCallback) {
+                    this.onConnectCallback = onConnectCallback;
+                }
+
                 this.webSocket = new WebSocket({
                     "url": this.webSocketUrl,
                     "accessToken": this.oauth2.activeToken,
@@ -234,7 +258,6 @@ export default class SessionApi {
                     "onMessage": this.onMessageWebSocket,
                     "onConnect": this.onConnectWebSocket,
                     "onConnectSuccess": resolve,
-                    "onConnectFailure": reject,
                     "onForceClose": this.onForceClose,
                     "reconnectOnError": this.connectionOptions.reconnectOnError,
                     referenceId
@@ -246,9 +269,9 @@ export default class SessionApi {
 
     }
 
-    async connect () {
+    async connect (onConnectCallback) {
         try {
-            await this.backoff.run(this._connect, this, [this.referenceIds[this.referenceIds.length - 1]], true);
+            await this.backoff.run(this._connect, this, [onConnectCallback, this.referenceIds[this.referenceIds.length - 1]], true);
         } catch (e) {
             logger.error(`Exception caught while retrying to connect: ${e && e.message}`, e);
         }

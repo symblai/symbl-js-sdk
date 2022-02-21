@@ -104,9 +104,8 @@ export default class WebSocket {
     }
 
     onClose(event): void {
-        if (!this.isConnected && event && event.code === 1006 && event.reason === 'connection failed') {
-            this.options['onConnectFailure'] ? this.options['onConnectFailure'](event) : logger.error(`Initial handshake for the connection failed: ${event.code} -- ${event.reason}`, event);
-            return;
+        if (!this.isConnected && event && event.code === 1006) {
+            event.handshakeFailed = true;
         }
 
         this.clearPingInterval();
@@ -191,7 +190,7 @@ export default class WebSocket {
         this.clearPingInterval();
         this.clearPongTimeout();
 
-        this.webSocket.close();
+        this.webSocket.close(1000);
     }
 
 }
