@@ -27,6 +27,8 @@ import symbl from "@symblai/symbl-web-sdk";
 
 import { v4 } from "uuid";
 
+import { initializeAudioDevice } from "./audio"
+
 let stream, subscribedStream;
 
 let connectionId;
@@ -102,11 +104,22 @@ function App() {
     const [subscribing, setSubscribing] = useState(false);
     const [renderViaSubscription, setRenderViaSubscription] = useState(false);
 
+    const sendAudio = (data) => {
+        stream && stream.sendAudio(data);
+    }
+
     const initiateConnection = async (handlers) => {
         const id = v4();
         console.log(id);
 
         connectionId = id;
+
+        let audioContext;
+        const useRawAudioWorklet = process.env.REACT_APP_USE_PCM_AUDIO_WORKLET === 'true';
+        if (useRawAudioWorklet) {
+            console.info(`Using Raw Audio Worklet`);
+            audioContext = await initializeAudioDevice(null, sendAudio);
+        }
 
         stream = await symbl.createStream({
             id,
@@ -119,8 +132,8 @@ function App() {
                 confidenceThreshold: 0.7,
                 timezoneOffset: 480, // Offset in minutes from UTC
                 languageCode: "en-US",
-                encoding: 'opus',
-                sampleRateHertz: 48000,
+                encoding: useRawAudioWorklet ? 'LINEAR16' : 'opus',
+                sampleRateHertz: (audioContext && audioContext.sampleRate) || 48000,
             },
             speaker: {
                 userId: process.env.USER_ID || "tanaka@example.com", // Update with valid email or a unique user id
@@ -128,7 +141,7 @@ function App() {
             },
             handlers,
             reconnectOnError: true
-        }, true);
+        }, !useRawAudioWorklet);
 
         return stream;
     };
