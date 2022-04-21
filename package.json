@@ -1,15 +1,15 @@
 {
   "name": "@symblai/symbl-js",
-  "version": "1.4.5",
+  "version": "1.4.7-beta.9",
   "description": "Javascript SDK for Symbl.ai's Language Insights API Platform",
   "main": "build/app.bundle.js",
   "dependencies": {
     "@symblai/api-client": "^1.0.17",
+    "@symblai/symbl-web-sdk": "^0.8.6",
     "@types/window-or-global": "^1.0.4",
     "detect-node": "^2.1.0",
     "loglevel": "^1.6.1",
     "mic": "^2.1.2",
-    "moment": "^2.29.1",
     "p-queue": "^6.4.0",
     "uuid": "latest",
     "websocket": "^1.0.28"

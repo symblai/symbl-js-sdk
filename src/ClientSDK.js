@@ -160,6 +160,10 @@ export default class ClientSDK {
                                         realtimeClient.sendAudio(data);
                                     },
 
+                                    sendJSON: (data) => {
+                                        realtimeClient.sendAudio(data);
+                                    },
+
                                     close: () => {
                                         realtimeClient.webSocket.disconnect();
                                         this.cache.remove(options.id);
@@ -482,7 +486,12 @@ export default class ClientSDK {
             this.oauth2
         );
         await this.oauth2.refreshAuthToken();
-        return sessionApi.connect();
+        await sessionApi.connect();
+        return {
+            close: () => {
+                sessionApi.disconnect();
+            }
+        }
     }
 
     async pushEventOnConnection (connectionId, event, callback) {

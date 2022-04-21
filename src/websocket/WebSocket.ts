@@ -64,7 +64,6 @@ export default class WebSocket {
         this.clearPongTimeout();
 
         this.options.onForceClose && this.options.onForceClose(this.options.referenceId);
-
         this.webSocket.close(3006, "Connection closure due to failure in receiving pong within configured threshold");
     }
 
