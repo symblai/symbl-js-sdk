@@ -221,6 +221,7 @@ export default class RealtimeApi {
             this.backoff.reset();
 
             if (!RealtimeApi.isOffline) {
+                logger.info("Reconnecting...");
                 await this.oauth2.refreshAuthToken();
 
                 this.referenceIds.push(uuid());
@@ -230,6 +231,7 @@ export default class RealtimeApi {
                     }
                 });
             } else {
+                logger.info("Not online. Reconnect delayed.");
                 let maxReconnectionAttempts = 900;
                 let reconnectionIntervalRef = setInterval(() => {
                     if (!RealtimeApi.isOffline) {
