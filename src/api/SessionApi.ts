@@ -112,11 +112,13 @@ export default class SessionApi {
             this.backoff.reset();
 
             if (!SessionApi.isOffline) {
+                logger.info("Reconnecting...");
                 await this.oauth2.refreshAuthToken();
 
                 this.referenceIds.push(uuid());
                 this.connect();
             } else {
+                logger.info("Not online. Reconnect delayed.");
                 let maxReconnectionAttempts = 900;
                 const reconnectionIntervalRef = setInterval(() => {
                     if (!SessionApi.isOffline) {
@@ -226,6 +228,7 @@ export default class SessionApi {
                 if (this.webSocketStatus !== webSocketConnectionStatus.connecting) {
                     this.webSocketStatus = webSocketConnectionStatus.connecting;
                 }
+                logger.debug(`connectionOptions`, this.connectionOptions);
                 this.webSocket = new WebSocket({
                     "url": this.webSocketUrl,
                     "accessToken": this.oauth2.activeToken,

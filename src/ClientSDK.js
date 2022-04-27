@@ -31,6 +31,12 @@ export default class ClientSDK {
         SessionApi.isOffline = isOffline;
     }
 
+    setReconnectOnError(value) {
+
+        this.reconnectOnError = value;
+
+    }
+
     async init (options) {
 
         if (!options) {
@@ -39,7 +45,7 @@ export default class ClientSDK {
 
         }
 
-        const {appId, appSecret, logLevel, tlsAuth, basePath, accessToken} = await options;
+        const {appId, appSecret, logLevel, tlsAuth, basePath, accessToken, reconnectOnError} = await options;
 
         if (!appId && !accessToken) {
             throw new Error('appId is required.');
@@ -52,6 +58,12 @@ export default class ClientSDK {
         if (logLevel) {
 
             logger.setLevel(logLevel);
+
+        }
+
+        if (reconnectOnError) {
+
+            this.setReconnectOnError(true);
 
         }
 
@@ -97,6 +109,12 @@ export default class ClientSDK {
         if (!options.id) {
             logger.warn(`No 'id' detected. Generating a UUID. Reference 'connectionId' property of the resolved object.`);
             options.id = v4();
+        }
+
+        if (!options.reconnectOnError && this.reconnectOnError) {
+
+            options.reconnectOnError = true;
+
         }
 
         let realtimeClient = this.cache.get(options.id);
@@ -476,6 +494,13 @@ export default class ClientSDK {
                 }
             }
         }
+
+        if (!options.reconnectOnError && this.reconnectOnError) {
+
+            options.reconnectOnError = true;
+
+        }
+
         const sessionApi = new SessionApi(
             {
                 options,
