@@ -1,15 +1,16 @@
 import {ApiClient, AuthenticationApi, Grant} from '@symblai/api-client';
 import config from '../config';
 import ErrorHandler from './ErrorHandler';
-import * as moment from 'moment';
 import logger from "../logger/Logger";
 
 export default class OAuth2 {
 
     constructor(options = {}) {
         this.apiClient = new ApiClient();
-        this.apiClient.basePath = options.authBasePath || config.authBasePath || options.basePath || config.basePath;
-        this.authenticationApi = new AuthenticationApi(this.apiClient);
+        const basePath = options.authBasePath || config.authBasePath || options.basePath || config.basePath;
+        this.setBasePath(basePath);
+        this.appId = null;
+        this.appSecret = null;
         this.activeToken = null;
         this.updatedOn = null;
         this.expiresOn = null;
@@ -32,6 +33,12 @@ export default class OAuth2 {
         this.processTokenResult = this.processTokenResult.bind(this);
         this.validateToken = this.validateToken.bind(this);
         this.refreshAuthToken = this.refreshAuthToken.bind(this);
+        this.setBasePath = this.setBasePath.bind(this);
+    }
+
+    setBasePath(basePath) {
+        this.apiClient.basePath = basePath;
+        this.authenticationApi = new AuthenticationApi(this.apiClient);
     }
 
     getApiClient() {
@@ -47,13 +54,13 @@ export default class OAuth2 {
         this.expiresIn = expiresIn;
         logger.trace('Token will expire in seconds: ', this.expiresIn);
 
-        this.updatedOn = moment();
+        this.updatedOn = new Date();
         logger.trace('Token updated on: ', this.updatedOn);
-        this.expiresOn = this.updatedOn.add(this.expiresIn, 'seconds');
+        this.expiresOn = new Date(this.updatedOn.getTime() + this.expiresIn * 1000)
         logger.trace('Token will expire on : ', this.expiresOn);
 
         if (this.automaticallyRefreshToken) {
-            this.refreshOn = this.expiresOn.subtract(this.refreshTimeBeforeExpiry, 'seconds');
+            this.refreshOn = new Date(this.expiresOn.getTime() - this.refreshTimeBeforeExpiry*1000);
             logger.trace('Token will be refreshed on: ', this.refreshOn);
             // const refreshDuration = moment.duration(this.refreshOn.diff(this.updatedOn)).asMilliseconds(); // In milliseconds
             let refreshDuration = (this.expiresIn - this.refreshTimeBeforeExpiry) * 1000;
@@ -139,8 +146,16 @@ export default class OAuth2 {
     }
 
     init(appId, appSecret, token) {
-        if (arguments.length < 2) {
-            throw new Error(`Expected number of arguments 2, detected: ${arguments.length}`);
+        if (!appId) {
+            appId = this.appId;
+        }
+
+        if (!appSecret) {
+            appSecret = this.appSecret;
+        }
+
+        if (!token) {
+            token = this.activeToken;
         }
 
         if (!appId && !token) {
