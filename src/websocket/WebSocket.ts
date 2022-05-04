@@ -1,6 +1,7 @@
 import {w3cwebsocket as W3CWebSocket} from 'websocket';
 import logger from "../logger/Logger";
 import ErrorHandler from "../api/ErrorHandler";
+import isNode from "detect-node";
 
 const PING = "__PING__";
 const PONG = "__PONG__";
@@ -128,7 +129,8 @@ export default class WebSocket {
     }
 
     connect(): void {
-        const urlWithToken = `${this.url}?access_token=${this.accessToken}`
+        const source = isNode ? "js_sdk" : "web_sdk";
+        const urlWithToken = `${this.url}?access_token=${this.accessToken}&source=${source}`
         this.webSocket = new W3CWebSocket(urlWithToken, null, null, {
             'X-API-KEY': this.accessToken
         });
