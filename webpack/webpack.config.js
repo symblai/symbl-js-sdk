@@ -42,7 +42,8 @@ var browserConfig = {
     target: 'web',
     entry: './dist/index.js',
     resolve: {
-        modules: ['node_modules/@symblai/api-client/src', 'node_modules']
+        modules: ['node_modules/@symblai/api-client/src', 'node_modules'],
+        fallback: { "querystring": require.resolve("querystring-es3") }
     },
     output: {
         path: path.resolve(directory, 'build'),
