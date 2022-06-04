@@ -18,6 +18,8 @@ interface OAuth2Object {
     init(appId: string, appSecret: string, ...args: any[]): Promise<any>;
     processTokenResult(data: any): void;
     getApiClient(): any;
+    validateToken(): any;
+    refreshAuthToken(): any;
     appId: string;
     appSecret: string;
 }

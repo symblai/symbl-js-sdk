@@ -27,7 +27,7 @@ import symbl from "@symblai/symbl-web-sdk";
 
 import { v4 } from "uuid";
 
-let stream;
+let stream, subscribedStream;
 
 let connectionId;
 
@@ -61,7 +61,7 @@ const handleMicEvent = (setMuted, setMuting, setCaption) => {
                     "You're unmuted. Live captions will appear here..."
                 );
             } else {
-                
+
                 symbl.mute(stream);
                 window.connectionActive = false;
 
@@ -127,6 +127,7 @@ function App() {
                 name: process.env.FULL_NAME || "Tanaka",
             },
             handlers,
+            reconnectOnError: true
         }, true);
 
         return stream;
@@ -145,7 +146,7 @@ function App() {
             setRenderViaSubscription(event.target.checked);
 
             if (!subscribed) {
-                await symbl.subscribeToStream(connectionId, (data) => {
+                subscribedStream = await symbl.subscribeToStream(connectionId, (data) => {
 
                     const { type } = data;
 
@@ -189,13 +190,15 @@ function App() {
 
                         if (renderViaSubscription) setCaption(transcript);
                     }
-                });
+                }, true);
 
                 setSubscribing(false);
                 setSubscribed(true);
             } else {
-                console.log("Already subscribed");
+                console.log("Already subscribed, closing stream", subscribedStream);
                 setSubscribing(false);
+                subscribedStream.close();
+                setSubscribed(false);
             }
         } else {
             console.log("Subscription in progress...");
@@ -234,9 +237,14 @@ function App() {
                     await symbl.stopRequest(stream);
                 }
 
+                if (subscribedStream) {
+                    await subscribedStream.close();
+                }
+
                 setStarted(false);
                 setMuted(true);
                 setRenderViaSubscription(false);
+                setSubscribed(false);
 
                 setCaption(
                     "Hit the Play button to connect! Captions will appear here"
@@ -305,7 +313,7 @@ function App() {
                                 label={renderViaSubscription ? "Subscribed" : "Not Subscribed"}
                             />
                         </FormGroup>
-                        
+
                     </Stack>
                     <Stack spacing={2} direction="row">
                         <Box

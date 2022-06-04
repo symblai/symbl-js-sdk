@@ -4,8 +4,8 @@ import logger from "../logger/Logger";
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable arrow-body-style */
 
-const DEFAULT_FACTOR = 0.75;
-const DEFAULT_MAX_RETRIES = 10;
+const DEFAULT_FACTOR = 0.90;
+const DEFAULT_MAX_RETRIES = 20;
 const DEFAULT_MAX = 5000;
 const DEFAULT_MIN = 100;
 
@@ -54,6 +54,8 @@ export default class IEBackoff {
         this.retries = maxRetries;
         this.nextDelay = max;
 
+        this.reset = this.reset.bind(this);
+        this.run = this.run.bind(this);
     }
 
     reset (): void {
@@ -67,15 +69,23 @@ export default class IEBackoff {
     /**
      * Inverse Exponential backoff for waiting retries of function
      * @param {function} fn - function to call after sleep
+     * @param context - Function context to execute with
+     * @param args - Array of arguments for the function
+     * @param executeWithoutDelay - Skip delay for an execution
      * @returns the provided function and executes it
      */
-    async run (fn: Function): Promise<Function> {
+    async run (fn: Function, context = null, args = [], executeWithoutDelay = false): Promise<Function> {
 
         if (!fn || typeof fn !== "function") {
 
             // eslint-disable-next-line max-len
-            logger.error("Please provide a callback function to be run after the inverse exponential backoff delay.");
+            const errorMessage = "Please provide a callback function to be run after the inverse exponential backoff delay.";
+            logger.error(errorMessage);
+            return Promise.reject(errorMessage);
+        }
 
+        if (args && !Array.isArray(args)) {
+            logger.error("No valid arguments passed in args")
         }
 
         if (this.retries === 0) {
@@ -87,31 +97,40 @@ export default class IEBackoff {
 
         try {
 
-            // Pauses further execution of the function until delay has passed
-            await new Promise((resolve) => setTimeout(
-                resolve,
-                this.nextDelay
-            ));
+            if (!executeWithoutDelay) {
+                // Pauses further execution of the function until delay has passed
+                await new Promise((resolve) => setTimeout(
+                    resolve,
+                    this.nextDelay
+                ));
 
-            this.retries -= 1;
+                this.retries -= 1;
 
-            const newBackoffTime = this.nextDelay * this.factor;
+                const newBackoffTime = this.nextDelay * this.factor;
 
-            if (newBackoffTime > this.min) {
+                if (newBackoffTime > this.min) {
 
-                this.nextDelay = newBackoffTime;
+                    this.nextDelay = newBackoffTime;
 
-            } else {
+                } else {
 
-                this.nextDelay = this.min;
+                    this.nextDelay = this.min;
 
+                }
             }
 
-            return fn();
+            const result = await fn.apply(context, args);
 
+            return result;
         } catch (err) {
 
-            logger.error(err);
+            if (this.retries <= 0) {
+                logger.error(err);
+                throw err;
+            } else {
+                logger.warn(`Execution failed with exception: ${err && err.message} -- Retrying`, err);
+                return this.run(fn, context, args);
+            }
 
         }
 

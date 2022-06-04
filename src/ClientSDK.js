@@ -24,6 +24,26 @@ export default class ClientSDK {
 
     }
 
+    // eslint-disable-next-line class-methods-use-this
+    setOffline (isOffline = false) {
+        // Add more offline/reconnection states here
+        RealtimeApi.isOffline = isOffline;
+        SessionApi.isOffline = isOffline;
+    }
+
+    setReconnectOnError(value) {
+
+        this.reconnectOnError = value;
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    setNetworkConnectivityDispatcher (networkConnectivityDispatcher) {
+        if (networkConnectivityDispatcher && networkConnectivityDispatcher.hasOwnProperty("forceCheckNetworkConnectivity")) {
+            RealtimeApi.setNetworkConnectivityDispatcher(networkConnectivityDispatcher);
+            SessionApi.setNetworkConnectivityDispatcher(networkConnectivityDispatcher);
+        }
+    }
+
     async init (options) {
 
         if (!options) {
@@ -32,7 +52,7 @@ export default class ClientSDK {
 
         }
 
-        const {appId, appSecret, logLevel, tlsAuth, basePath, accessToken} = await options;
+        const {appId, appSecret, logLevel, tlsAuth, basePath, accessToken, reconnectOnError} = await options;
 
         if (!appId && !accessToken) {
             throw new Error('appId is required.');
@@ -45,6 +65,12 @@ export default class ClientSDK {
         if (logLevel) {
 
             logger.setLevel(logLevel);
+
+        }
+
+        if (reconnectOnError) {
+
+            this.setReconnectOnError(true);
 
         }
 
@@ -92,10 +118,16 @@ export default class ClientSDK {
             options.id = v4();
         }
 
+        if (!options.reconnectOnError && this.reconnectOnError) {
+
+            options.reconnectOnError = true;
+
+        }
+
         let realtimeClient = this.cache.get(options.id);
         if (!realtimeClient) {
             realtimeClient = new RealtimeApi(options, this.oauth2, false, {
-                _onClose: () => {
+                onClose: () => {
                     this.cache.remove(options.id);
                 }
             });
@@ -105,7 +137,7 @@ export default class ClientSDK {
         return new Promise((resolve, reject) => {
             let retryCount = 0;
 
-            const retry = () => {
+            const retry = async () => {
                 if (retryCount < 4) {
                     logger.info(
                         "Retry attempt: ",
@@ -114,6 +146,7 @@ export default class ClientSDK {
                     );
 
                     if (this.oauth2 && this.oauth2.activeToken) {
+                        await this.oauth2.refreshAuthToken();
                         realtimeClient.connect(async (err) => {
                             if (err) {
                                 reject(err);
@@ -149,6 +182,10 @@ export default class ClientSDK {
                                     },
 
                                     sendAudio: (data) => {
+                                        realtimeClient.sendAudio(data);
+                                    },
+
+                                    sendJSON: (data) => {
                                         realtimeClient.sendAudio(data);
                                     },
 
@@ -239,7 +276,7 @@ export default class ClientSDK {
 
             let retryCount = 0;
 
-            const retry = () => {
+            const retry = async () => {
 
                 if (retryCount < 4) {
 
@@ -248,7 +285,9 @@ export default class ClientSDK {
                         retryCount,
                         this.oauth2
                     );
+
                     if (this.oauth2 && this.oauth2.activeToken) {
+                        await this.oauth2.refreshAuthToken();
 
                         realtimeClient.connect();
                         startRequest(
@@ -327,8 +366,8 @@ export default class ClientSDK {
 
         }
 
-        return new Promise((resolve, reject) => {
-
+        return new Promise(async (resolve, reject) => {
+            await this.oauth2.refreshAuthToken();
             this.endpointClient.startEndpoint({endpoint,
                 validationToken,
                 actions,
@@ -366,7 +405,7 @@ export default class ClientSDK {
     }
 
     async stopEndpoint (options) {
-
+        await this.oauth2.refreshAuthToken();
         if (!options) {
 
             throw new Error("options must be provided.");
@@ -428,7 +467,7 @@ export default class ClientSDK {
 
     }
 
-    subscribeToConnection (connectionId, options) {
+    async subscribeToConnection (connectionId, options) {
         // For backwards compatability. 2nd param was previously
         // a callback function.
         if (typeof options === "function") {
@@ -447,11 +486,12 @@ export default class ClientSDK {
             },
             this.oauth2
         );
-        sessionApi.connect();
+        await this.oauth2.refreshAuthToken();
+        return sessionApi.connect();
 
     }
 
-    subscribeToStream (connectionId, options) {
+    async subscribeToStream (connectionId, options) {
         // For backwards compatability. 2nd param was previously
         // a callback function.
         if (typeof options === "function") {
@@ -461,6 +501,13 @@ export default class ClientSDK {
                 }
             }
         }
+
+        if (!options.reconnectOnError && this.reconnectOnError) {
+
+            options.reconnectOnError = true;
+
+        }
+
         const sessionApi = new SessionApi(
             {
                 options,
@@ -470,8 +517,17 @@ export default class ClientSDK {
             },
             this.oauth2
         );
-        sessionApi.connect();
 
+        await this.oauth2.refreshAuthToken();
+        await new Promise((resolve) => {
+            sessionApi.connect(resolve);
+        });
+
+        return {
+            close: () => {
+                return sessionApi.disconnect();
+            }
+        };
     }
 
     async pushEventOnConnection (connectionId, event, callback) {
