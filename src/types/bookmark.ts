@@ -1,9 +1,4 @@
-interface BookmarkUser {
-  name?: string;
-  userId?: string;
-  email?: string;
-}
-
+/*  Bookmark Create/Update and Delete Models
 interface BookmarkCreateRequest {
   type: "bookmark_request";
   operation: "create";
@@ -30,6 +25,13 @@ interface BookmarkDeleteRequest {
   operation: "delete";
   id?: string;
 }
+*/
+
+interface BookmarkUser {
+  name?: string;
+  userId?: string;
+  email?: string;
+}
 
 interface BookmarkResponse {
   type: string;
@@ -42,10 +44,4 @@ interface BookmarkResponse {
   duration: number;
 }
 
-export {
-  BookmarkCreateRequest,
-  BookmarkUpdateRequest,
-  BookmarkDeleteRequest,
-  BookmarkUser,
-  BookmarkResponse,
-};
+export { BookmarkUser, BookmarkResponse };

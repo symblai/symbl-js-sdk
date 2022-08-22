@@ -1,3 +1,5 @@
+import { BookmarkResponse } from "./bookmark";
+
 interface RealtimeUser {
     userId: string;
     name: string;
@@ -109,6 +111,7 @@ interface RealtimeHandlers {
     onInsightResponse?: (insightData: RealtimeInsightData[]) => void;
     onTopicResponse?: (topicData: RealtimeTopicData[]) => void;
     onDataReceived?: (data: unknown) => void;
+    onBookmarksReceived?: (bookmarkData: BookmarkResponse) => void;
 }
 
 interface RealtimeOptionsConfig {

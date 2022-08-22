@@ -99,6 +99,7 @@ export default class RealtimeApi {
         this.onTrackerResponse = this.onTrackerResponse.bind(this);
         this.onTopicResponse = this.onTopicResponse.bind(this);
         this.onDataReceived = this.onDataReceived.bind(this);
+        this.onBookmarksResponse = this.onBookmarksResponse(this);
 
         this.sendAudio = this.sendAudio.bind(this);
         this.sendStart = this.sendStart.bind(this);
@@ -198,6 +199,9 @@ export default class RealtimeApi {
                     break;
                 case "topic_response":
                     this.onTopicResponse(data.topics);
+                    break;
+                case "bookmark_response":
+                    this.onBookmarksResponse(data.bookmarks);
                     break;
                 default:
                     break;
@@ -708,6 +712,18 @@ export default class RealtimeApi {
 
         }
 
+    }
+
+    onBookmarksResponse (bookmark) {
+        if (this.handlers.onBookmarksResponse) {
+
+            setImmediate(() => {
+
+                this.handlers.onBookmarksResponse(bookmark);
+
+            });
+
+        }
     }
 
 }
