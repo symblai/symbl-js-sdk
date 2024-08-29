@@ -205,9 +205,9 @@ export default class WebSocket {
         const source = isNode
             ? "js_sdk"
             : "web_sdk";
-        const urlWithToken = `${this.url}?access_token=${this.accessToken}&source=${source}`;
+        const urlSourceToken = `${this.url}?source=${source}`;
         this.webSocket = new W3CWebSocket(
-            urlWithToken,
+            urlSourceToken,
             null,
             null,
             {
