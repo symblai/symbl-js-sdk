@@ -208,7 +208,7 @@ export default class WebSocket {
         const urlSourceToken = `${this.url}?source=${source}`;
         this.webSocket = new W3CWebSocket(
             urlSourceToken,
-            null,
+            this.accessToken,
             null,
             {
                 "X-API-KEY": this.accessToken
