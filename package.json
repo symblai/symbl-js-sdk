@@ -1,6 +1,6 @@
 {
   "name": "@symblai/symbl-js",
-  "version": "1.4.8",
+  "version": "1.4.9",
   "description": "Javascript SDK for Symbl.ai's Language Insights API Platform",
   "main": "build/app.bundle.js",
   "types": "./dist/index.d.ts",
@@ -10,7 +10,7 @@
     "loglevel": "^1.6.1",
     "mic": "^2.1.2",
     "p-queue": "^6.4.0",
-    "uuid": "latest",
+    "uuid": "9.0.1",
     "websocket": "^1.0.28"
   },
   "devDependencies": {
